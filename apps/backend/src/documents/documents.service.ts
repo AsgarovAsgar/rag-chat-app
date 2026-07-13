@@ -1,6 +1,8 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Pool } from 'pg';
 import { PG_POOL } from '../database/database.module';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 
 export interface DocumentRow {
   id: string;
@@ -16,7 +18,10 @@ export interface DocumentRow {
 
 @Injectable()
 export class DocumentsService {
-  constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
+  constructor(
+    @Inject(PG_POOL) private readonly pool: Pool,
+    @InjectQueue('ingestion') private readonly ingestionQueue: Queue,
+  ) {}
 
   async createFromUpload(file: Express.Multer.File): Promise<DocumentRow> {
     const { rows } = await this.pool.query<DocumentRow>(
@@ -25,6 +30,13 @@ export class DocumentsService {
        RETURNING *`,
       [file.originalname, file.mimetype, file.size, file.path],
     );
-    return rows[0];
+
+    const document = rows[0];
+
+    await this.ingestionQueue.add('ingest-document', {
+      documentId: document.id,
+    });
+
+    return document;
   }
 }
