@@ -3,6 +3,8 @@ import { Inject, Logger } from '@nestjs/common';
 import { Job } from 'bullmq';
 import { Pool } from 'pg';
 import { PG_POOL } from '../database/database.module';
+import { ExtractionService } from './ingestion.extraction';
+import { DocumentRow } from '../documents/documents.service';
 
 export interface IngestionJobData {
   documentId: string;
@@ -12,7 +14,10 @@ export interface IngestionJobData {
 export class IngestionProcessor extends WorkerHost {
   private readonly logger = new Logger(IngestionProcessor.name);
 
-  constructor(@Inject(PG_POOL) private readonly pool: Pool) {
+  constructor(
+    @Inject(PG_POOL) private readonly pool: Pool,
+    private readonly extractionService: ExtractionService,
+  ) {
     super();
   }
 
@@ -23,7 +28,24 @@ export class IngestionProcessor extends WorkerHost {
     try {
       await this.setStatus(documentId, 'processing');
 
-      // TODO: extract → chunk → embed → store chunks
+      // extract → chunk → embed → store chunks
+      const { rows } = await this.pool.query<DocumentRow>(
+        `SELECT * FROM documents WHERE id = $1`,
+        [documentId],
+      );
+      const document = rows[0];
+      if (!document?.storage_path) {
+        throw new Error(
+          `Document ${documentId} not found or has no stored file`,
+        );
+      }
+
+      const text = await this.extractionService.extractText(
+        document.storage_path,
+      );
+      this.logger.log(
+        `Extracted ${text.length} chars from ${document.filename}`,
+      );
 
       await this.setStatus(documentId, 'ready');
       this.logger.log(`Document ${documentId} ready`);
