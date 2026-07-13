@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { DatabaseModule } from './database/database.module';
 import { DocumentsModule } from './documents/documents.module';
 import { BullModule } from '@nestjs/bullmq';
+import { IngestionModule } from './ingestion/ingestion.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { BullModule } from '@nestjs/bullmq';
         },
       }),
     }),
+    IngestionModule,
   ],
 })
 export class AppModule {}
