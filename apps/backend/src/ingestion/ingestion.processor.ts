@@ -5,6 +5,7 @@ import { Pool } from 'pg';
 import { PG_POOL } from '../database/database.module';
 import { ExtractionService } from './ingestion.extraction';
 import { DocumentRow } from '../documents/documents.service';
+import { ChunkingService } from './ingestion.chunking';
 
 export interface IngestionJobData {
   documentId: string;
@@ -17,6 +18,7 @@ export class IngestionProcessor extends WorkerHost {
   constructor(
     @Inject(PG_POOL) private readonly pool: Pool,
     private readonly extractionService: ExtractionService,
+    private readonly chunkingService: ChunkingService,
   ) {
     super();
   }
@@ -29,6 +31,7 @@ export class IngestionProcessor extends WorkerHost {
       await this.setStatus(documentId, 'processing');
 
       // extract → chunk → embed → store chunks
+      // 1. extract
       const { rows } = await this.pool.query<DocumentRow>(
         `SELECT * FROM documents WHERE id = $1`,
         [documentId],
@@ -45,6 +48,15 @@ export class IngestionProcessor extends WorkerHost {
       );
       this.logger.log(
         `Extracted ${text.length} chars from ${document.filename}`,
+      );
+
+      // 2. chunk
+      const chunks = this.chunkingService.chunk(text);
+      if (chunks.length === 0) {
+        throw new Error(`No text content extracted from ${document.filename}`);
+      }
+      this.logger.log(
+        `Split into ${chunks.length} chunks (avg ${Math.round(text.length / chunks.length)} chars)`,
       );
 
       await this.setStatus(documentId, 'ready');
