@@ -6,6 +6,7 @@ import { PG_POOL } from '../database/database.module';
 import { ExtractionService } from './ingestion.extraction';
 import { DocumentRow } from '../documents/documents.service';
 import { ChunkingService } from './ingestion.chunking';
+import { EmbeddingsService } from '../embeddings/embeddings.service';
 
 export interface IngestionJobData {
   documentId: string;
@@ -19,6 +20,7 @@ export class IngestionProcessor extends WorkerHost {
     @Inject(PG_POOL) private readonly pool: Pool,
     private readonly extractionService: ExtractionService,
     private readonly chunkingService: ChunkingService,
+    private readonly embeddingsService: EmbeddingsService,
   ) {
     super();
   }
@@ -59,10 +61,51 @@ export class IngestionProcessor extends WorkerHost {
         `Split into ${chunks.length} chunks (avg ${Math.round(text.length / chunks.length)} chars)`,
       );
 
-      await this.setStatus(documentId, 'ready');
-      this.logger.log(`Document ${documentId} ready`);
+      // 3. embed
+      const vectors = await this.embeddingsService.embed(
+        chunks.map((c) => c.text),
+      );
+      this.logger.log(
+        `Embedded ${vectors.length} chunks (${vectors[0].length} dims)`,
+      );
+
+      // 4. store chunks + mark ready atomically
+      const client = await this.pool.connect();
+      try {
+        await client.query('BEGIN');
+        await client.query('DELETE FROM chunks WHERE document_id = $1', [
+          documentId,
+        ]);
+        for (let i = 0; i < chunks.length; i++) {
+          await client.query(
+            `INSERT INTO chunks (document_id, chunk_index, content, embedding)
+       VALUES ($1, $2, $3, $4::vector)`,
+            [
+              documentId,
+              chunks[i].index,
+              chunks[i].text,
+              JSON.stringify(vectors[i]),
+            ],
+          );
+        }
+        await client.query(
+          `UPDATE documents SET status = 'ready', error = NULL, updated_at = now()
+     WHERE id = $1`,
+          [documentId],
+        );
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      } finally {
+        client.release();
+      }
+      this.logger.log(
+        `Stored ${chunks.length} chunks; document ${documentId} ready`,
+      );
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
+      this.logger.error(`Ingestion failed for doc ${documentId}: ${message}`);
       await this.setStatus(documentId, 'failed', message);
       throw err;
     }
