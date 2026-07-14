@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { UploadForm } from './UploadForm'
 
 interface Document {
   id: string
@@ -27,6 +28,7 @@ export function DocumentsPanel() {
   return (
     <section>
       <h2>Documents</h2>
+      <UploadForm />
       {data.length === 0 ? (
         <p>No documents yet.</p>
       ) : (
