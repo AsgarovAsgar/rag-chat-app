@@ -4,6 +4,7 @@ import { DatabaseModule } from './database/database.module';
 import { DocumentsModule } from './documents/documents.module';
 import { BullModule } from '@nestjs/bullmq';
 import { IngestionModule } from './ingestion/ingestion.module';
+import { RetrievalModule } from './retrieval/retrieval.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { IngestionModule } from './ingestion/ingestion.module';
       }),
     }),
     IngestionModule,
+    RetrievalModule,
   ],
 })
 export class AppModule {}
