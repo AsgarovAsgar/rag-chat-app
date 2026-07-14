@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Controller,
+  Get,
   Post,
   UploadedFile,
   UseInterceptors,
@@ -45,5 +46,10 @@ export class DocumentsController {
   async upload(@UploadedFile() file?: Express.Multer.File) {
     if (!file) throw new BadRequestException('No file uploaded');
     return this.documentsService.createFromUpload(file);
+  }
+
+  @Get()
+  async list() {
+    return this.documentsService.findAll();
   }
 }
