@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { DocumentsPanel } from './components/DocumentsPanel'
 
 interface Conversation {
   id: string
@@ -25,6 +26,7 @@ function App() {
 
   return(
     <div>
+      <DocumentsPanel />
       <h1>Conversations</h1>
       {
         data.length === 0 ? (
