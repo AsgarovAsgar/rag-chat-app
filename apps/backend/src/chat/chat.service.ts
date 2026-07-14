@@ -8,6 +8,14 @@ import OpenAI from 'openai';
 import { ConfigService } from '@nestjs/config';
 
 type HistoryMessage = { role: 'user' | 'assistant'; content: string };
+type ConversationRow = { id: string; title: string; created_at: string };
+type MessageRow = {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  sources: SearchResult[] | null;
+  created_at: string;
+};
 
 const CHAT_MODEL = 'gpt-4o-mini';
 const HISTORY_LIMIT = 10;
@@ -26,6 +34,34 @@ export class ChatService {
     this.client = new OpenAI({
       apiKey: configService.getOrThrow<string>('OPENAI_API_KEY'),
     });
+  }
+
+  async listConversations(): Promise<ConversationRow[]> {
+    const { rows } = await this.pool.query<ConversationRow>(
+      `SELECT id, title, created_at AS "createdAt"
+       FROM conversations
+       ORDER BY created_at DESC`,
+    );
+    return rows;
+  }
+
+  async getMessages(conversationId: string): Promise<MessageRow[]> {
+    const { rows: found } = await this.pool.query(
+      'SELECT id FROM conversations WHERE id = $1',
+      [conversationId],
+    );
+    if (found.length === 0) {
+      throw new NotFoundException('Conversation not found');
+    }
+
+    const { rows } = await this.pool.query<MessageRow>(
+      `SELECT id, role, content, sources, created_at AS "createdAt"
+       FROM messages
+       WHERE conversation_id = $1
+       ORDER BY created_at ASC`,
+      [conversationId],
+    );
+    return rows;
   }
 
   private async ensureConversation(dto: ChatDto): Promise<string> {

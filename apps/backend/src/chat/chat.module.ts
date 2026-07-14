@@ -2,10 +2,11 @@ import { Module } from '@nestjs/common';
 import { RetrievalModule } from '../retrieval/retrieval.module';
 import { ChatController } from './chat.controller';
 import { ChatService } from './chat.service';
+import { ConversationsController } from './conversations.controller';
 
 @Module({
   imports: [RetrievalModule],
-  controllers: [ChatController],
+  controllers: [ChatController, ConversationsController],
   providers: [ChatService],
 })
 export class ChatModule {}
