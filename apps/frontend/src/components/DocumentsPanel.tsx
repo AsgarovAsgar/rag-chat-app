@@ -20,6 +20,12 @@ export function DocumentsPanel() {
   const { data, isPending, isError, error } = useQuery({
     queryKey: ['documents'],
     queryFn: fetchDocuments,
+    refetchInterval: (query) => {
+      const docs = query.state.data
+      if(!docs) return 
+      const isBusy = docs.some(d => d.status === 'pending' || d.status === 'processing')
+      return isBusy ? 2000 : false
+    }
   })
 
   if (isPending) return <p>Loading documents…</p>
