@@ -5,6 +5,7 @@ import { DocumentsModule } from './documents/documents.module';
 import { BullModule } from '@nestjs/bullmq';
 import { IngestionModule } from './ingestion/ingestion.module';
 import { RetrievalModule } from './retrieval/retrieval.module';
+import { ChatModule } from './chat/chat.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { RetrievalModule } from './retrieval/retrieval.module';
     }),
     IngestionModule,
     RetrievalModule,
+    ChatModule,
   ],
 })
 export class AppModule {}
