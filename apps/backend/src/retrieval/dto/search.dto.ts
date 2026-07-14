@@ -10,7 +10,7 @@ import {
 export class SearchDto {
   @IsString()
   @IsNotEmpty()
-  query: string;
+  query!: string;
 
   @IsOptional()
   @IsInt()

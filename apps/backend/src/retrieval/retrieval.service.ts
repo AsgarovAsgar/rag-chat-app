@@ -25,7 +25,7 @@ export class RetrievalService {
     const [queryVector] = await this.embeddingsService.embed([query]);
     const vectorParam = JSON.stringify(queryVector);
 
-    const { rows } = await this.pool.query(
+    const { rows } = await this.pool.query<SearchResult>(
       `SELECT
          c.id AS "chunkId",
          c.document_id AS "documentId",
