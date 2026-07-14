@@ -16,6 +16,15 @@ export interface DocumentRow {
   updated_at: string;
 }
 
+export interface DocumentListItem {
+  id: string;
+  filename: string;
+  status: 'pending' | 'processing' | 'ready' | 'failed';
+  error: string | null;
+  sizeBytes: number;
+  createdAt: string;
+}
+
 @Injectable()
 export class DocumentsService {
   constructor(
@@ -38,5 +47,16 @@ export class DocumentsService {
     });
 
     return document;
+  }
+
+  async findAll(): Promise<DocumentListItem[]> {
+    const { rows } = await this.pool.query<DocumentListItem>(
+      `SELECT id, filename, status, error,
+            size_bytes AS "sizeBytes",
+            created_at AS "createdAt"
+      FROM documents
+      ORDER BY created_at DESC`,
+    );
+    return rows;
   }
 }
