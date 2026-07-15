@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { DocumentsPanel } from './components/DocumentsPanel'
+import { ChatPanel } from './components/ChatPanel'
 
 interface Conversation {
   id: string
@@ -26,6 +27,7 @@ function App() {
 
   return(
     <div>
+      <ChatPanel />
       <DocumentsPanel />
       <h1>Conversations</h1>
       {
