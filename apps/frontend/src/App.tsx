@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { DocumentsPanel } from './components/DocumentsPanel'
 import { ChatPanel } from './components/ChatPanel'
 import { useChatStore } from './store/chatStore'
+import { Button } from '@/components/ui/button'
 
 interface Conversation {
   id: string
@@ -32,6 +33,7 @@ function App() {
       <ChatPanel />
       <DocumentsPanel />
       <h1 className='text-3xl font-bold text-red-500'>Conversations</h1>
+      <Button>Hello</Button>
       {
         data.length === 0 ? (
           <p>No conversations yet.</p>
