@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { DocumentsPanel } from './components/DocumentsPanel'
+import { ChatPanel } from './components/ChatPanel'
+import { useChatStore } from './store/chatStore'
 
 interface Conversation {
   id: string
@@ -15,6 +17,7 @@ async function fetchConversations(): Promise<Conversation[]> {
 }
 
 function App() {
+  const selectConversation = useChatStore((s) => s.selectConversation)
 
   const {data, isPending, isError, error} = useQuery({
     queryKey: ['conversations'],
@@ -26,6 +29,7 @@ function App() {
 
   return(
     <div>
+      <ChatPanel />
       <DocumentsPanel />
       <h1>Conversations</h1>
       {
@@ -34,7 +38,7 @@ function App() {
         ) : (
           <ul>
             {data.map(c => (
-              <li key={c.id}>
+              <li key={c.id} onClick={() => selectConversation(c.id)} style={{cursor: 'pointer'}}>
                 <p>{c.title ?? `Untitled - `}</p>
                 <p>{new Date(c.createdAt).toLocaleString()}</p>
               </li>
