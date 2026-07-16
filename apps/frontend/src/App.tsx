@@ -31,7 +31,7 @@ function App() {
     <div>
       <ChatPanel />
       <DocumentsPanel />
-      <h1>Conversations</h1>
+      <h1 className='text-3xl font-bold text-red-500'>Conversations</h1>
       {
         data.length === 0 ? (
           <p>No conversations yet.</p>
