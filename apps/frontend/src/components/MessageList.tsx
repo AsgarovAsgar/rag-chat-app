@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { useChatStore, type Source } from "../store/chatStore"
+import { SourceChips } from "./SourceChips"
 
 interface Message {
   id: string
@@ -32,7 +33,12 @@ export function MessageList() {
         {
           data?.map(m => (
             <li key={m.id}>
-              <strong>{m.role}:</strong> {m.content}
+              <div>
+                <strong>{m.role}:</strong> {m.content}
+              </div>
+              {m.role === 'assistant' && m.sources && m.sources.length > 0 && 
+                <SourceChips sources={m.sources} />
+              }
             </li>
           ))
         }

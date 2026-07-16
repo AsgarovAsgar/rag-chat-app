@@ -35,7 +35,7 @@ export const useChatStore = create<ChatState>((set) => ({
   startStream: () => set({status: 'streaming', streamingText: '', sources: [], error: null}),
   finishStream: () => set({status: 'idle'}),
   failStream: (message: string) => set({status: 'error', error: message}),
-  clearStream: () => set({streamingText: ''}),
+  clearStream: () => set({streamingText: '', sources: []}),
 
   setSources: (conversationId, sources) => set({conversationId, sources}),
   

@@ -3,6 +3,7 @@ import { useChatStore } from "../store/chatStore";
 import { streamChat } from "../api/chat";
 import { useQueryClient } from "@tanstack/react-query";
 import { MessageList } from "./MessageList";
+import { SourceChips } from "./SourceChips";
 
 export function ChatPanel() {
   const queryClient = useQueryClient()
@@ -10,6 +11,7 @@ export function ChatPanel() {
   const [input, setInput] = useState('')
   const conversationId = useChatStore(s => s.conversationId)
   const streamingText = useChatStore(s => s.streamingText)
+  const sources = useChatStore(s => s.sources)
   const status = useChatStore(s => s.status)
   const error = useChatStore(s => s.error)
 
@@ -35,6 +37,7 @@ export function ChatPanel() {
       <h2>Chat</h2>
       <MessageList />
       {streamingText && <p>{streamingText}</p>}
+      {sources.length > 0 && <SourceChips sources={sources} />}
       {error && <p>{error}</p>}
 
       <form onSubmit={handleSubmit}>
