@@ -19,6 +19,7 @@ interface ChatState {
   startStream: () => void
   finishStream: () => void
   failStream: (message: string) => void
+  clearStream: () => void
   setSources: (conversationId: string, sources: Source[]) => void
   appendToken: (token: string) => void
   selectConversation: (id: string | null) => void
@@ -34,6 +35,7 @@ export const useChatStore = create<ChatState>((set) => ({
   startStream: () => set({status: 'streaming', streamingText: '', sources: [], error: null}),
   finishStream: () => set({status: 'idle'}),
   failStream: (message: string) => set({status: 'error', error: message}),
+  clearStream: () => set({streamingText: ''}),
 
   setSources: (conversationId, sources) => set({conversationId, sources}),
   

@@ -1,8 +1,12 @@
 import { useState } from "react";
 import { useChatStore } from "../store/chatStore";
 import { streamChat } from "../api/chat";
+import { useQueryClient } from "@tanstack/react-query";
+import { MessageList } from "./MessageList";
 
 export function ChatPanel() {
+  const queryClient = useQueryClient()
+
   const [input, setInput] = useState('')
   const conversationId = useChatStore(s => s.conversationId)
   const streamingText = useChatStore(s => s.streamingText)
@@ -16,11 +20,20 @@ export function ChatPanel() {
     if(!message || status === 'streaming') return
     setInput('')
     await streamChat(message, conversationId)
+    
+    const freshId = useChatStore.getState().conversationId
+    if(freshId) {
+      await queryClient.invalidateQueries({queryKey: ['messages', freshId]})
+    }
+
+    queryClient.invalidateQueries({queryKey: ['conversations']})
+    useChatStore.getState().clearStream()
   }
 
   return (
     <section>
       <h2>Chat</h2>
+      <MessageList />
       {streamingText && <p>{streamingText}</p>}
       {error && <p>{error}</p>}
 
