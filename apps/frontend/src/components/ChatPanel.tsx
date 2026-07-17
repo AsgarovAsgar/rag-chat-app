@@ -4,6 +4,8 @@ import { streamChat } from "../api/chat";
 import { useQueryClient } from "@tanstack/react-query";
 import { MessageList } from "./MessageList";
 import { SourceChips } from "./SourceChips";
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 export function ChatPanel() {
   const queryClient = useQueryClient()
@@ -33,20 +35,25 @@ export function ChatPanel() {
   }
 
   return (
-    <section>
-      <h2>Chat</h2>
-      <MessageList />
-      {streamingText && <p>{streamingText}</p>}
-      {sources.length > 0 && <SourceChips sources={sources} />}
-      {error && <p>{error}</p>}
+    <section className="flex min-h-0 flex-1 flex-col">
+      <div className="flex-1 overflow-y-auto p-4">
+        <div className="mx-auto max-w-3xl">
+          <MessageList />
+          {streamingText && <p>{streamingText}</p>}
+          {sources.length > 0 && <SourceChips sources={sources} />}
+          {error && <p className="text-destructive">{error}</p>}
+        </div>
+      </div>
 
-      <form onSubmit={handleSubmit}>
-        <input 
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask something about your document..."
-        />
-        <button type="submit" disabled={status === 'streaming'}>Send</button>
+      <form onSubmit={handleSubmit} className="border-t p-4">
+        <div className="mx-auto flex max-w-3xl gap-2">
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask something about your documents..."
+          />
+          <Button type="submit" disabled={status === 'streaming'}>Send</Button>
+        </div>
       </form>
     </section>
   )
