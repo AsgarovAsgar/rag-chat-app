@@ -1,52 +1,24 @@
-import { useQuery } from '@tanstack/react-query'
-import { DocumentsPanel } from './components/DocumentsPanel'
+import { AppSidebar } from '@/components/app-sidebar'
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { Separator } from '@/components/ui/separator'
 import { ChatPanel } from './components/ChatPanel'
-import { useChatStore } from './store/chatStore'
-
-interface Conversation {
-  id: string
-  title: string | null
-  createdAt: string
-}
-
-async function fetchConversations(): Promise<Conversation[]> {
-  const res = await fetch('/api/conversations')
-  if(!res.ok) 
-    throw new Error(`Failed to load conversations: ${res.status}`)
-  return res.json()
-}
+import { TooltipProvider } from '@/components/ui/tooltip'
 
 function App() {
-  const selectConversation = useChatStore((s) => s.selectConversation)
-
-  const {data, isPending, isError, error} = useQuery({
-    queryKey: ['conversations'],
-    queryFn: fetchConversations
-  })
-
-  if (isPending) return <p>Loading conversations…</p>
-  if (isError) return <p>Error: {error.message}</p>
-
-  return(
-    <div>
-      <ChatPanel />
-      <DocumentsPanel />
-      <h1>Conversations</h1>
-      {
-        data.length === 0 ? (
-          <p>No conversations yet.</p>
-        ) : (
-          <ul>
-            {data.map(c => (
-              <li key={c.id} onClick={() => selectConversation(c.id)} style={{cursor: 'pointer'}}>
-                <p>{c.title ?? `Untitled - `}</p>
-                <p>{new Date(c.createdAt).toLocaleString()}</p>
-              </li>
-            ))}
-          </ul>
-        )
-      }
-    </div>
+  return (
+    <TooltipProvider>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4 data-vertical:self-center" />
+            <span className="font-medium">RAG Chat</span>
+          </header>
+          <ChatPanel />
+        </SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
   )
 }
 
