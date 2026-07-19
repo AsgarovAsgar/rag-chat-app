@@ -6,12 +6,14 @@ import { MessageList } from "./MessageList";
 import { SourceChips } from "./SourceChips";
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { useNavigate, useParams } from "react-router";
 
 export function ChatPanel() {
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const {conversationId} = useParams()
 
   const [input, setInput] = useState('')
-  const conversationId = useChatStore(s => s.conversationId)
   const streamingText = useChatStore(s => s.streamingText)
   const sources = useChatStore(s => s.sources)
   const status = useChatStore(s => s.status)
@@ -23,15 +25,15 @@ export function ChatPanel() {
     const message = input.trim()
     if(!message || status === 'streaming') return
     setInput('')
-    await streamChat(message, conversationId)
+    const returnedId = await streamChat(message, conversationId)
     
-    const freshId = useChatStore.getState().conversationId
-    if(freshId) {
-      await queryClient.invalidateQueries({queryKey: ['messages', freshId]})
+    if(returnedId) {
+      await queryClient.invalidateQueries({queryKey: ['messages', returnedId]})
     }
 
     queryClient.invalidateQueries({queryKey: ['conversations']})
     useChatStore.getState().clearStream()
+    if(!conversationId && returnedId) navigate(`/c/${returnedId}`)
   }
 
   return (

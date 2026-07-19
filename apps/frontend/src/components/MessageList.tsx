@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
-import { useChatStore, type Source } from "../store/chatStore"
+import type { Source } from "../store/chatStore"
 import { SourceChips } from "./SourceChips"
+import { useParams } from "react-router"
 
 interface Message {
   id: string
@@ -17,12 +18,12 @@ async function fetchMessages(conversationId:string):Promise<Message[]> {
 }
 
 export function MessageList() {
-  const conversationId = useChatStore(s => s.conversationId)
+  const {conversationId} = useParams()
 
   const {data, isError, error} = useQuery({
     queryKey: ['messages', conversationId],
     queryFn: () => fetchMessages(conversationId!),
-    enabled: conversationId !== null
+    enabled: !!conversationId
   })
 
   if(!conversationId) return null

@@ -10,7 +10,6 @@ export interface Source {
 type ChatStatus = 'idle' | 'streaming' | 'error'
 
 interface ChatState {
-  conversationId: string | null
   streamingText: string
   sources: Source[]
   status: ChatStatus
@@ -20,13 +19,11 @@ interface ChatState {
   finishStream: () => void
   failStream: (message: string) => void
   clearStream: () => void
-  setSources: (conversationId: string, sources: Source[]) => void
+  setSources: (sources: Source[]) => void
   appendToken: (token: string) => void
-  selectConversation: (id: string | null) => void
 }
 
 export const useChatStore = create<ChatState>((set) => ({
-  conversationId: null,
   streamingText: '',
   sources: [],
   status: 'idle',
@@ -37,11 +34,7 @@ export const useChatStore = create<ChatState>((set) => ({
   failStream: (message: string) => set({status: 'error', error: message}),
   clearStream: () => set({streamingText: '', sources: []}),
 
-  setSources: (conversationId, sources) => set({conversationId, sources}),
+  setSources: (sources) => set({sources}),
   
   appendToken: (token) => set((state) => ({streamingText: state.streamingText + token})),
-
-  selectConversation: (id) => 
-    set({conversationId: id, streamingText: '', sources: [], status: 'idle', error: null})
-
 }))
