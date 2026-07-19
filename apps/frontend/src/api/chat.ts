@@ -2,12 +2,12 @@ import { useChatStore, type Source } from "../store/chatStore";
 
 const { startStream, finishStream, failStream, setSources, appendToken } = useChatStore.getState()
 
-function handleEvent(event: string, data: string) {
+function handleEvent(event: string, data: string): string | null {
   switch(event) {
     case 'sources': {
       const parsed = JSON.parse(data) as { conversationId: string, sources: Source[] }
-      setSources(parsed.conversationId, parsed.sources)
-      break
+      setSources(parsed.sources)
+      return parsed.conversationId
     }
 
     case 'token': {
@@ -27,9 +27,11 @@ function handleEvent(event: string, data: string) {
       break
     }
   }
+  return null
 }
 
-export async function streamChat(message: string, conversationId: string | null): Promise<void> {
+export async function streamChat(message: string, conversationId: string | undefined): Promise<string | null> {
+  let resultId: string | null = conversationId ?? null
   startStream()
 
   try {
@@ -61,11 +63,16 @@ export async function streamChat(message: string, conversationId: string | null)
             else if(line.startsWith('data: ')) data += line.slice(6)
         }
         
-        if(data) handleEvent(event, data)
+        if(data) {
+          const id = handleEvent(event, data)
+          if(id) resultId = id
+        }
       }
     }
 
   } catch (err) {
     failStream(err instanceof Error ? err.message : 'Stream failed')
   }
+
+  return resultId
 }

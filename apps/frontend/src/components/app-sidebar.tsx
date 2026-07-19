@@ -5,10 +5,10 @@ import {
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton,
   SidebarMenuItem, SidebarRail,
 } from '@/components/ui/sidebar'
-import { useChatStore } from '@/store/chatStore'
 import { DocumentsPanel } from '@/components/DocumentsPanel'
 import { AppBrand } from '@/components/app-brand'
 import { NavUser } from '@/components/nav-user'
+import { Link, useMatch } from 'react-router'
 
 interface Conversation {
   id: string
@@ -29,8 +29,11 @@ const user = {
 }
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
-  const conversationId = useChatStore(s => s.conversationId)
-  const selectConversation = useChatStore(s => s.selectConversation)
+  // const conversationId = useChatStore(s => s.conversationId)
+  // const selectConversation = useChatStore(s => s.selectConversation)
+
+  const match = useMatch('/c/:conversationId')
+  const activeId = match?.params.conversationId
 
   const { data, isPending, isError, error } = useQuery({
     queryKey: ['conversations'],
@@ -43,7 +46,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
         <AppBrand />
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="New chat" onClick={() => selectConversation(null)}>
+            <SidebarMenuButton tooltip="New chat" render={<Link to="/" />}>
               <MessageSquarePlusIcon />
               <span>New chat</span>
             </SidebarMenuButton>
@@ -60,10 +63,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
               {isError && <p className="px-2 text-sm text-destructive">{error.message}</p>}
               {data?.map(c => (
                 <SidebarMenuItem key={c.id}>
-                  <SidebarMenuButton
-                    isActive={c.id === conversationId}
-                    onClick={() => selectConversation(c.id)}
-                  >
+                  <SidebarMenuButton isActive={c.id === activeId} render={<Link to={`/c/${c.id}`} />}>
                     <span>{c.title ?? 'Untitled'}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
