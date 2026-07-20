@@ -43,6 +43,9 @@ export function ChatPanel() {
         <div className="mx-auto max-w-3xl">
           <MessageList />
           {pendingUserMessage && <p><strong>user:</strong> {pendingUserMessage}</p>}
+          {status === 'streaming' && !streamingText && (
+            <p className="text-muted-foreground animate-pulse">Thinking…</p>
+          )}
           {streamingText && <p>{streamingText}</p>}
           {sources.length > 0 && <SourceChips sources={sources} />}
           {error && <p className="text-destructive">{error}</p>}
