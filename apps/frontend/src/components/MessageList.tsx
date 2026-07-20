@@ -3,6 +3,8 @@ import type { Source } from "../store/chatStore"
 import { SourceChips } from "./SourceChips"
 import { useParams } from "react-router"
 import { MessageBubble } from "./MessageBubble"
+import { CitedText } from "./CitedText";
+import { extractCitations } from "@/lib/citations"
 
 interface Message {
   id: string
@@ -35,9 +37,11 @@ export function MessageList() {
         {
           data?.map(m => (
             <li key={m.id}>
-              <MessageBubble role={m.role}>{m.content}</MessageBubble>
+              <MessageBubble role={m.role}>
+                {m.role === 'assistant' ? <CitedText text={m.content} /> : m.content}
+              </MessageBubble>
               {m.role === 'assistant' && m.sources && m.sources.length > 0 && 
-                <SourceChips sources={m.sources} />
+                <SourceChips sources={m.sources} cited={extractCitations(m.content)} />
               }
             </li>
           ))

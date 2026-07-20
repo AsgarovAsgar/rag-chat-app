@@ -1,6 +1,9 @@
 import { useChatStore } from "../store/chatStore";
 import { MessageBubble } from "./MessageBubble";
 import { SourceChips } from "./SourceChips";
+import { CitedText } from "./CitedText";
+import { extractCitations } from "@/lib/citations"
+
 
 export function StreamingMessage() {
   const pendingUserMessage = useChatStore(s => s.pendingUserMessage)
@@ -17,8 +20,8 @@ export function StreamingMessage() {
           <span className="text-muted-foreground animate-pulse">Thinking…</span>
         </MessageBubble>
       )}
-      {streamingText && <MessageBubble role="assistant">{streamingText}</MessageBubble>}
-      {sources.length > 0 && <SourceChips sources={sources} />}
+      {streamingText && <MessageBubble role="assistant"><CitedText text={streamingText} /></MessageBubble>}
+      {sources.length > 0 && <SourceChips sources={sources} cited={extractCitations(streamingText)} />}
       {error && <p className="text-destructive">{error}</p>}
     </>
   )
