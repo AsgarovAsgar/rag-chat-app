@@ -1,9 +1,10 @@
-import { Routes, Route, Outlet, useMatch } from 'react-router'
+import { Routes, Route, Outlet } from 'react-router'
 import { AppSidebar } from '@/components/app-sidebar'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { Separator } from '@/components/ui/separator'
-import { ChatPanel } from './components/ChatPanel'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { HomePage } from './pages/HomePage'
+import { ConversationPage } from './pages/ConversationPage'
 
 function AppLayout() {
   return (
@@ -24,14 +25,11 @@ function AppLayout() {
 }
 
 function App() {
-  const match = useMatch(`/c/:conversationId`)
-  const chatKey = match?.params.conversationId ?? 'new'
-
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route index element={<ChatPanel key={chatKey} />} />
-        <Route path="c/:conversationId" element={<ChatPanel key={chatKey} />} />
+        <Route index element={<HomePage />} />
+        <Route path="c/:conversationId" element={<ConversationPage />} />
       </Route>
     </Routes>
   )

@@ -16,10 +16,11 @@ interface ChatState {
   status: ChatStatus
   error: string | null
 
-  startStream: (message:string) => void
+  startStream: (message: string) => void
   finishStream: () => void
   failStream: (message: string) => void
   clearStream: () => void
+  clearPendingUserMessage: () => void
   setSources: (sources: Source[]) => void
   appendToken: (token: string) => void
 }
@@ -37,6 +38,7 @@ export const useChatStore = create<ChatState>((set) => ({
   finishStream: () => set({status: 'idle'}),
   failStream: (message: string) => set({status: 'error', error: message}),
   clearStream: () => set({streamingText: '', sources: [], pendingUserMessage: null}),
+  clearPendingUserMessage: () => set({pendingUserMessage: null}),
 
   setSources: (sources) => set({sources}),
   

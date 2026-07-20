@@ -1,25 +1,11 @@
 import { useQuery } from "@tanstack/react-query"
-import type { Source } from "../store/chatStore"
 import { SourceChips } from "./SourceChips"
 import { useParams } from "react-router"
 import { MessageBubble } from "./MessageBubble"
 import { CitedText } from "./CitedText";
 import { extractCitations } from "@/lib/citations"
 import { useLayoutEffect, useRef } from "react"
-
-interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  sources: Source[] | null
-  createdAt: string
-}
-
-async function fetchMessages(conversationId:string):Promise<Message[]> {
-  const res = await fetch(`/api/conversations/${conversationId}/messages`)
-  if(!res.ok) throw new Error(`Failed to load messages: ${res.status}`)
-  return res.json()
-}
+import { fetchMessages } from "../api/messages"
 
 export function MessageList() {
   const {conversationId} = useParams()
