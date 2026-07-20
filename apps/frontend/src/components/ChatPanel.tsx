@@ -15,6 +15,7 @@ export function ChatPanel() {
 
   const [input, setInput] = useState('')
   const streamingText = useChatStore(s => s.streamingText)
+  const pendingUserMessage = useChatStore(s => s.pendingUserMessage)
   const sources = useChatStore(s => s.sources)
   const status = useChatStore(s => s.status)
   const error = useChatStore(s => s.error)
@@ -41,6 +42,7 @@ export function ChatPanel() {
       <div className="flex-1 overflow-y-auto p-4">
         <div className="mx-auto max-w-3xl">
           <MessageList />
+          {pendingUserMessage && <p><strong>user:</strong> {pendingUserMessage}</p>}
           {streamingText && <p>{streamingText}</p>}
           {sources.length > 0 && <SourceChips sources={sources} />}
           {error && <p className="text-destructive">{error}</p>}

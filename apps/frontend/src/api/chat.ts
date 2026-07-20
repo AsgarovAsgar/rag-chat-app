@@ -32,7 +32,7 @@ function handleEvent(event: string, data: string): string | null {
 
 export async function streamChat(message: string, conversationId: string | undefined): Promise<string | null> {
   let resultId: string | null = conversationId ?? null
-  startStream()
+  startStream(message)
 
   try {
     const res = await fetch('/api/chat', {
