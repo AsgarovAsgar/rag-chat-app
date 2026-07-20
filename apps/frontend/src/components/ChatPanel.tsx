@@ -35,7 +35,7 @@ export function ChatPanel() {
 
   return (
     <section className="flex min-h-0 flex-1 flex-col">
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto px-4 pt-4 pb-2 scroll-pb-2">
         <div className="mx-auto max-w-3xl space-y-2">
           <MessageList />
           <StreamingMessage />

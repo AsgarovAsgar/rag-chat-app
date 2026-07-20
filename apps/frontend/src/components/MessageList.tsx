@@ -5,6 +5,7 @@ import { useParams } from "react-router"
 import { MessageBubble } from "./MessageBubble"
 import { CitedText } from "./CitedText";
 import { extractCitations } from "@/lib/citations"
+import { useLayoutEffect, useRef } from "react"
 
 interface Message {
   id: string
@@ -22,6 +23,7 @@ async function fetchMessages(conversationId:string):Promise<Message[]> {
 
 export function MessageList() {
   const {conversationId} = useParams()
+  const bottomRef = useRef<HTMLDivElement>(null)
 
   const {data, isError, error} = useQuery({
     queryKey: ['messages', conversationId],
@@ -29,10 +31,15 @@ export function MessageList() {
     enabled: !!conversationId
   })
 
+  useLayoutEffect(() => {
+    bottomRef.current?.scrollIntoView({block: 'end'})
+  }, [data])
+
   if(!conversationId) return null
   if(isError) return <p>Error: {error.message}</p>
 
   return (
+    <>
       <ul className="space-y-2">
         {
           data?.map(m => (
@@ -47,5 +54,7 @@ export function MessageList() {
           ))
         }
       </ul>
+      <div ref={bottomRef} />
+    </>
   )
 }

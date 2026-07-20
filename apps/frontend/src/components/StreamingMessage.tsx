@@ -3,6 +3,7 @@ import { MessageBubble } from "./MessageBubble";
 import { SourceChips } from "./SourceChips";
 import { CitedText } from "./CitedText";
 import { extractCitations } from "@/lib/citations"
+import { useLayoutEffect, useRef } from "react";
 
 
 export function StreamingMessage() {
@@ -11,6 +12,11 @@ export function StreamingMessage() {
   const sources = useChatStore(s => s.sources)
   const status = useChatStore(s => s.status)
   const error = useChatStore(s => s.error)
+
+  const bottomRef = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    bottomRef.current?.scrollIntoView({block: 'end'})
+  }, [pendingUserMessage, streamingText])
 
   return (
     <>
@@ -23,6 +29,7 @@ export function StreamingMessage() {
       {streamingText && <MessageBubble role="assistant"><CitedText text={streamingText} /></MessageBubble>}
       {sources.length > 0 && <SourceChips sources={sources} cited={extractCitations(streamingText)} />}
       {error && <p className="text-destructive">{error}</p>}
+      <div ref={bottomRef} />
     </>
   )
 }
