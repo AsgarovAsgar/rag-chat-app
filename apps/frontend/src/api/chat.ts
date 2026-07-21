@@ -30,7 +30,11 @@ function handleEvent(event: string, data: string): string | null {
   return null
 }
 
-export async function streamChat(message: string, conversationId: string | undefined): Promise<string | null> {
+export async function streamChat(
+  message: string,
+  conversationId: string | undefined,
+  onConversationCreated?: (id: string) => void
+): Promise<string | null> {
   let resultId: string | null = conversationId ?? null
   startStream(message)
 
@@ -62,10 +66,13 @@ export async function streamChat(message: string, conversationId: string | undef
           if(line.startsWith('event: ')) event = line.slice(7)
             else if(line.startsWith('data: ')) data += line.slice(6)
         }
-        
+
         if(data) {
           const id = handleEvent(event, data)
-          if(id) resultId = id
+          if(id) {
+            resultId = id
+            onConversationCreated?.(id)
+          }
         }
       }
     }
