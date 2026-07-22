@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useChatStore } from "../store/chatStore";
-import { streamChat } from "../api/chat";
+import { streamChat, stopChat } from "../api/chat";
 import { fetchMessages } from "../api/messages";
 import { useQueryClient } from "@tanstack/react-query";
-import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { useNavigate, useParams } from "react-router";
+import { ArrowUp, Square } from "lucide-react";
 
 export function ChatInput() {
   const queryClient = useQueryClient()
@@ -13,6 +14,7 @@ export function ChatInput() {
   const {conversationId} = useParams()
 
   const [input, setInput] = useState('')
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const status = useChatStore(s => s.status)
 
   async function handleSubmit(e: React.SubmitEvent) {
@@ -21,6 +23,9 @@ export function ChatInput() {
     const message = input.trim()
     if(!message || status === 'streaming') return
     setInput('')
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
 
     // new chats only: as soon as the backend reveals the id, warm the messages
     // cache, move to the conversation page, and drop the optimistic bubble
@@ -44,15 +49,59 @@ export function ChatInput() {
     useChatStore.getState().clearStream()
   }
 
+  function handleTextareaChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    setInput(e.target.value);
+
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  };
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      e.currentTarget.form?.requestSubmit()
+    }
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="flex w-full gap-2">
-      <Input
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Ask something about your documents..."
-        autoFocus
-      />
-      <Button type="submit" disabled={status === 'streaming'}>Send</Button>
+    <form onSubmit={handleSubmit} className="w-full">
+      <div className="flex w-full max-w-3xl mx-auto items-end gap-2 rounded-4xl border border-border/90 bg-transparent dark:bg-muted/50 p-2 shadow-md">
+        <div className="flex flex-1 items-center overflow-auto min-h-9 max-h-52 pl-3 pr-2">
+          <Textarea
+            ref={textareaRef}
+            value={input}
+            onChange={handleTextareaChange}
+            onKeyDown={handleKeyDown}
+            placeholder="Ask something about your documents..."
+            className="min-h-0 resize-none rounded-none border-0 p-0 text-base md:text-base placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 scrollbar-thin dark:bg-transparent"
+            rows={1}
+          />
+        </div>
+
+        {status === 'streaming' ? (
+          <Button 
+            type="button" 
+            size="icon" 
+            className="rounded-full shrink-0 size-9 cursor-pointer"
+            aria-label="Stop streaming"
+            onClick={stopChat}
+          >
+            <Square className="size-3.5" fill="currentColor" />
+          </Button>
+        ): (
+          <Button
+            type="submit"
+            size="icon"
+            className="rounded-full shrink-0 size-9 cursor-pointer"
+            disabled={!input.trim()}
+            aria-label="Send message"
+          >
+            <ArrowUp className="size-5" />
+          </Button>
+        )}
+      </div>
     </form>
   )
 }
