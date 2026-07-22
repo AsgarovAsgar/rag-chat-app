@@ -104,10 +104,14 @@ export class ChatService {
 
     return `
       You are an assistant answering questions about the user's uploaded documents.
-      Answer ONLY using the numbered context chunks below. Cite the chunks you used inline, like [1] or [2][3].
-      If the context does not contain the answer, say you don't know — do not invent information.
+      Base your answers on the numbered context chunks below, and cite the chunks you use inline, like [1] or [2][3].
+      For broad or summary questions, synthesize the best answer you can from the available chunks — they may be only a sample of the documents, so present it as what the documents cover rather than an exhaustive answer.
+      If the context only partially covers the question, answer the covered part and briefly note what's missing.
+      Only say you don't know when no chunk is relevant to the question. Never state facts that are not in the context.
 
-      Context: ${context}
+      Context:
+
+      ${context}
     `;
   }
 
