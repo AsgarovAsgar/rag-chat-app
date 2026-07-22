@@ -126,14 +126,25 @@ export class ChatService {
       [conversationId, dto.message],
     );
 
-    const sources = await this.retrievalService.search(dto.message, TOP_K);
-
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.flushHeaders();
 
-    this.send(res, 'sources', { conversationId, sources });
+    this.send(res, 'conversation', { conversationId });
+
+    let sources: SearchResult[];
+
+    try {
+      sources = await this.retrievalService.search(dto.message, TOP_K);
+    } catch (err) {
+      this.logger.error('Retrieval failed', err);
+      this.send(res, 'error', { message: 'Retrieval failed' });
+      res.end();
+      return;
+    }
+
+    this.send(res, 'sources', { sources });
 
     const abort = new AbortController();
     res.on('close', () => abort.abort());

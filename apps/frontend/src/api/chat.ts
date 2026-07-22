@@ -6,10 +6,15 @@ let controller: AbortController | null = null
 
 function handleEvent(event: string, data: string): string | null {
   switch(event) {
-    case 'sources': {
-      const parsed = JSON.parse(data) as { conversationId: string, sources: Source[] }
-      setSources(parsed.sources)
+    case 'conversation': {
+      const parsed = JSON.parse(data) as { conversationId: string }
       return parsed.conversationId
+    }
+
+    case 'sources': {
+      const parsed = JSON.parse(data) as { sources: Source[] }
+      setSources(parsed.sources)
+      return null
     }
 
     case 'token': {
