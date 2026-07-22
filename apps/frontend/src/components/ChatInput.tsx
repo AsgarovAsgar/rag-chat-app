@@ -1,12 +1,12 @@
 import { useState, useRef } from "react";
 import { useChatStore } from "../store/chatStore";
-import { streamChat } from "../api/chat";
+import { streamChat, stopChat } from "../api/chat";
 import { fetchMessages } from "../api/messages";
 import { useQueryClient } from "@tanstack/react-query";
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { useNavigate, useParams } from "react-router";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp, Square } from "lucide-react";
 
 export function ChatInput() {
   const queryClient = useQueryClient()
@@ -80,15 +80,27 @@ export function ChatInput() {
           />
         </div>
 
-        <Button
-          type="submit"
-          size="icon"
-          className="rounded-full shrink-0 size-9 cursor-pointer"
-          disabled={status === 'streaming' || !input.trim()}
-          aria-label="Send message"
-        >
-          <ArrowUp className="size-5" />
-        </Button>
+        {status === 'streaming' ? (
+          <Button 
+            type="button" 
+            size="icon" 
+            className="rounded-full shrink-0 size-9 cursor-pointer"
+            aria-label="Stop streaming"
+            onClick={stopChat}
+          >
+            <Square className="size-3.5" fill="currentColor" />
+          </Button>
+        ): (
+          <Button
+            type="submit"
+            size="icon"
+            className="rounded-full shrink-0 size-9 cursor-pointer"
+            disabled={!input.trim()}
+            aria-label="Send message"
+          >
+            <ArrowUp className="size-5" />
+          </Button>
+        )}
       </div>
     </form>
   )

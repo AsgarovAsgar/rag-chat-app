@@ -2,6 +2,8 @@ import { useChatStore, type Source } from "../store/chatStore";
 
 const { startStream, finishStream, failStream, setSources, appendToken } = useChatStore.getState()
 
+let controller: AbortController | null = null
+
 function handleEvent(event: string, data: string): string | null {
   switch(event) {
     case 'sources': {
@@ -36,13 +38,15 @@ export async function streamChat(
   onConversationCreated?: (id: string) => void
 ): Promise<string | null> {
   let resultId: string | null = conversationId ?? null
+  controller = new AbortController()
   startStream(message)
 
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, conversationId: conversationId ?? undefined })
+      body: JSON.stringify({ message, conversationId: conversationId ?? undefined }),
+      signal: controller.signal
     })
     if(!res.ok || !res.body) throw new Error(`Chat request failed: ${res.status}`)
 
@@ -78,8 +82,18 @@ export async function streamChat(
     }
 
   } catch (err) {
-    failStream(err instanceof Error ? err.message : 'Stream failed')
+    if(err instanceof Error && err.name === 'AbortError') {
+      finishStream()
+    } else {
+      failStream(err instanceof Error ? err.message : 'Stream failed')
+    }
+  } finally {
+    controller = null
   }
 
   return resultId
+}
+
+export function stopChat() {
+  controller?.abort()
 }
