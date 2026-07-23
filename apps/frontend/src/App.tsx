@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { ConversationPage } from '@/pages/ConversationPage'
+import { DocumentsPage } from '@/pages/DocumentsPage'
 import { HomePage } from '@/pages/HomePage'
 
 function AppLayout() {
@@ -31,6 +32,7 @@ function App() {
       <Route element={<AppLayout />}>
         <Route index element={<HomePage />} />
         <Route path="c/:conversationId" element={<ConversationPage />} />
+        <Route path='documents' element={<DocumentsPage />} />
       </Route>
     </Routes>
   )

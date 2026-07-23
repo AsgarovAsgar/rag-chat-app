@@ -1,11 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { MessageSquarePlusIcon } from 'lucide-react'
+import { FileText, MessageSquarePlusIcon } from 'lucide-react'
 import { Link, useMatch } from 'react-router'
 
 import { fetchConversations } from '@/api/conversations'
 import { queryKeys } from '@/api/queryKeys'
 import { AppBrand } from '@/components/AppBrand'
-import { DocumentsPanel } from '@/components/DocumentsPanel'
 import { NavUser } from '@/components/NavUser'
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -22,6 +21,7 @@ const user = {
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const match = useMatch('/c/:conversationId')
   const activeId = match?.params.conversationId
+  const isDocumentsActive = !!useMatch('/documents')
 
   const { data, isPending, isError, error } = useQuery({
     queryKey: queryKeys.conversations,
@@ -37,6 +37,12 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenuButton tooltip="New chat" render={<Link to="/" />}>
               <MessageSquarePlusIcon />
               <span>New chat</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton tooltip="Documents" render={<Link to="/documents" />} isActive={isDocumentsActive}>
+              <FileText />
+              <span>Documents</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -57,13 +63,6 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-          <SidebarGroupLabel>Documents</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <DocumentsPanel />
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

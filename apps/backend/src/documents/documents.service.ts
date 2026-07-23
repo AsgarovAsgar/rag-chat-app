@@ -1,8 +1,9 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { Pool } from 'pg';
 import { PG_POOL } from '../database/database.module';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { rm } from 'node:fs/promises';
 
 export interface DocumentRow {
   id: string;
@@ -58,5 +59,42 @@ export class DocumentsService {
       ORDER BY created_at DESC`,
     );
     return rows;
+  }
+
+  async remove(id: string): Promise<void> {
+    const { rows } = await this.pool.query<{ storage_path: string | null }>(
+      `DELETE FROM documents WHERE id = $1 RETURNING storage_path`,
+      [id],
+    );
+    if(rows.length === 0) {
+      throw new NotFoundException(`Document ${id} not found`)
+    }
+    const storagePath = rows[0].storage_path
+    if(storagePath) {
+      await rm(storagePath, {force: true})
+    }
+  } 
+
+  async retry(id: string): Promise<void> {
+    const { rows } = await this.pool.query<{ id: string }>(
+      `UPDATE documents
+      SET status = 'pending', error = NULL, updated_at = now()
+      WHERE id = $1 AND status = 'failed'
+      RETURNING id`,
+      [id],
+    );
+
+    if (rows.length === 0) {
+      const { rows: existing } = await this.pool.query(
+        `SELECT 1 FROM documents WHERE id = $1`,
+        [id],
+      );
+      if (existing.length === 0) {
+        throw new NotFoundException(`Document ${id} not found`);
+      }
+      throw new ConflictException('Only failed documents can be retried');
+    }
+
+    await this.ingestionQueue.add('ingest-document', { documentId: id });
   }
 }

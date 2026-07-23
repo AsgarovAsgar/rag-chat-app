@@ -27,3 +27,13 @@ export async function uploadDocument(file: File): Promise<Document> {
 
   return res.json()
 }
+
+export async function deleteDocument(id:string): Promise<void> {
+  const res = await fetch(`/api/documents/${id}`, { method: 'DELETE' })
+  if(!res.ok) throw new Error(`Delete failed: ${res.status}`)
+}
+
+export async function retryDocument(id:string): Promise<void> {
+  const res = await fetch(`/api/documents/${id}/retry`, { method: 'POST' })
+  if(!res.ok) throw new Error(`Retry failed: ${res.status}`)
+}
