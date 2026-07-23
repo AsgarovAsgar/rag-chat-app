@@ -3,6 +3,7 @@ import { RotateCcw, Trash2 } from 'lucide-react'
 
 import { deleteDocument, fetchDocuments, retryDocument } from '@/api/documents'
 import { queryKeys } from '@/api/queryKeys'
+import { DocumentUpload } from '@/components/DocumentUpload'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -32,6 +33,12 @@ export function DocumentsPage() {
   const { data: documents, isPending, error } = useQuery({
     queryKey: queryKeys.documents,
     queryFn: fetchDocuments,
+    refetchInterval: (query) => {
+      const docs = query.state.data
+      if (!docs) return false
+      const isBusy = docs.some((d) => d.status === 'pending' || d.status === 'processing')
+      return isBusy ? 2000 : false
+    },
   })
 
   const invalidate = () =>
@@ -49,21 +56,24 @@ export function DocumentsPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl p-4">
-      <h1 className="mb-4 text-xl font-medium">Documents</h1>
-      <Table>
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-xl font-medium">Documents</h1>
+        <DocumentUpload />
+      </div>
+      <Table className="table-fixed">
         <TableHeader>
           <TableRow>
             <TableHead>Filename</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Size</TableHead>
-            <TableHead>Uploaded</TableHead>
+            <TableHead className="w-28">Status</TableHead>
+            <TableHead className="w-24">Size</TableHead>
+            <TableHead className="w-28">Uploaded</TableHead>
             <TableHead className="w-20" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {documents.map((doc) => (
             <TableRow key={doc.id}>
-              <TableCell className="max-w-48 truncate">{doc.filename}</TableCell>
+              <TableCell className="truncate">{doc.filename}</TableCell>
               <TableCell>
                 <Badge variant={statusVariant[doc.status]} title={doc.error ?? undefined}>
                   {doc.status}
