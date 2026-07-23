@@ -1,7 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { UploadForm } from './UploadForm'
+
 import { fetchDocuments } from '@/api/documents'
 import { queryKeys } from '@/api/queryKeys'
+
+import { UploadForm } from './UploadForm'
 
 
 export function DocumentsPanel() {

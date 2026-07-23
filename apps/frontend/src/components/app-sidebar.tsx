@@ -1,16 +1,17 @@
 import { useQuery } from '@tanstack/react-query'
 import { MessageSquarePlusIcon } from 'lucide-react'
+import { Link, useMatch } from 'react-router'
+
+import { fetchConversations } from '@/api/conversations'
+import { queryKeys } from '@/api/queryKeys'
+import { AppBrand } from '@/components/app-brand'
+import { DocumentsPanel } from '@/components/DocumentsPanel'
+import { NavUser } from '@/components/nav-user'
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton,
   SidebarMenuItem, SidebarRail,
 } from '@/components/ui/sidebar'
-import { DocumentsPanel } from '@/components/DocumentsPanel'
-import { AppBrand } from '@/components/app-brand'
-import { NavUser } from '@/components/nav-user'
-import { Link, useMatch } from 'react-router'
-import { fetchConversations } from '@/api/conversations'
-import { queryKeys } from '@/api/queryKeys'
 
 const user = {
   name: 'Asgar',

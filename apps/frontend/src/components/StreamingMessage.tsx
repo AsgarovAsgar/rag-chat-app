@@ -1,10 +1,12 @@
-import { useChatStore } from "../store/chatStore";
-import { MessageBubble } from "./MessageBubble";
-import { SourceChips } from "./SourceChips";
-import { CitedText } from "./CitedText";
-import { extractCitations } from "@/lib/citations"
 import { useLayoutEffect, useRef } from "react";
 import { useParams } from "react-router";
+
+import { extractCitations } from "@/lib/citations"
+import { useChatStore } from "@/store/chatStore";
+
+import { CitedText } from "./CitedText";
+import { MessageBubble } from "./MessageBubble";
+import { SourceChips } from "./SourceChips";
 
 
 export function StreamingMessage() {

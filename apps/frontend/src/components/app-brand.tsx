@@ -1,4 +1,5 @@
 import { BotIcon } from 'lucide-react'
+
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
 
 export function AppBrand() {

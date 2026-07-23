@@ -1,7 +1,8 @@
 import { useParams } from "react-router";
-import { MessageList } from "../components/MessageList";
-import { StreamingMessage } from "../components/StreamingMessage";
-import { ChatInput } from "../components/ChatInput";
+
+import { ChatInput } from "@/components/ChatInput";
+import { MessageList } from "@/components/MessageList";
+import { StreamingMessage } from "@/components/StreamingMessage";
 
 export function ConversationPage() {
   const {conversationId} = useParams()
