@@ -1,5 +1,5 @@
-import { useChatStore } from "../store/chatStore";
-import { ChatInput } from "../components/ChatInput";
+import { ChatInput } from "@/components/ChatInput";
+import { useChatStore } from "@/store/chatStore";
 
 export function HomePage() {
   const streamConversationId = useChatStore(s => s.streamConversationId)

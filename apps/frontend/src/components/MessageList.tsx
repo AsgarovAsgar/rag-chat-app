@@ -1,12 +1,14 @@
 import { useQuery } from "@tanstack/react-query"
-import { SourceChips } from "./SourceChips"
-import { useParams } from "react-router"
-import { MessageBubble } from "./MessageBubble"
-import { CitedText } from "./CitedText";
-import { extractCitations } from "@/lib/citations"
 import { useLayoutEffect, useRef } from "react"
+import { useParams } from "react-router"
+
 import { fetchMessages } from "@/api/messages"
 import { queryKeys } from '@/api/queryKeys'
+import { extractCitations } from "@/lib/citations"
+
+import { CitedText } from "./CitedText";
+import { MessageBubble } from "./MessageBubble"
+import { SourceChips } from "./SourceChips"
 
 
 export function MessageList() {

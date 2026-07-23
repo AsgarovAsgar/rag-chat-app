@@ -1,10 +1,11 @@
-import { Routes, Route, Outlet } from 'react-router'
-import { AppSidebar } from '@/components/app-sidebar'
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { Outlet,Route, Routes } from 'react-router'
+
+import { AppSidebar } from '@/components/AppSidebar'
 import { Separator } from '@/components/ui/separator'
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { HomePage } from './pages/HomePage'
-import { ConversationPage } from './pages/ConversationPage'
+import { ConversationPage } from '@/pages/ConversationPage'
+import { HomePage } from '@/pages/HomePage'
 
 function AppLayout() {
   return (
