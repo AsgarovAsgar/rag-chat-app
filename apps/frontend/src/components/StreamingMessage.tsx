@@ -4,10 +4,14 @@ import { SourceChips } from "./SourceChips";
 import { CitedText } from "./CitedText";
 import { extractCitations } from "@/lib/citations"
 import { useLayoutEffect, useRef } from "react";
+import { useParams } from "react-router";
 
 
 export function StreamingMessage() {
+  const {conversationId} = useParams()
+
   const pendingUserMessage = useChatStore(s => s.pendingUserMessage)
+  const streamConversationId = useChatStore(s => s.streamConversationId)
   const streamingText = useChatStore(s => s.streamingText)
   const sources = useChatStore(s => s.sources)
   const status = useChatStore(s => s.status)
@@ -17,6 +21,8 @@ export function StreamingMessage() {
   useLayoutEffect(() => {
     bottomRef.current?.scrollIntoView({block: 'end'})
   }, [pendingUserMessage, streamingText])
+
+  if(streamConversationId !== conversationId) return null
 
   return (
     <>

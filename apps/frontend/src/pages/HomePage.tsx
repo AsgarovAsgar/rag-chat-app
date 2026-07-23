@@ -2,6 +2,7 @@ import { useChatStore } from "../store/chatStore";
 import { ChatInput } from "../components/ChatInput";
 
 export function HomePage() {
+  const streamConversationId = useChatStore(s => s.streamConversationId)
   const error = useChatStore(s => s.error)
 
   return (
@@ -9,7 +10,7 @@ export function HomePage() {
       <div className="w-full max-w-xl space-y-4">
         <h1 className="text-center text-4xl font-medium">Hello, Asgar!</h1>
         <ChatInput />
-        {error && <p className="text-center text-destructive">{error}</p>}
+        {streamConversationId === null && error && <p className="text-center text-destructive">{error}</p>}
       </div>
     </section>
   )

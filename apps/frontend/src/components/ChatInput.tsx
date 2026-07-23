@@ -16,6 +16,7 @@ export function ChatInput() {
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const status = useChatStore(s => s.status)
+  const streamConversationId = useChatStore(s => s.streamConversationId)
 
   async function handleSubmit(e: React.SubmitEvent) {
     e.preventDefault()
@@ -80,7 +81,7 @@ export function ChatInput() {
           />
         </div>
 
-        {status === 'streaming' ? (
+        {status === 'streaming' && (conversationId ?? null) === streamConversationId ? (
           <Button 
             type="button" 
             size="icon" 
@@ -95,7 +96,7 @@ export function ChatInput() {
             type="submit"
             size="icon"
             className="rounded-full shrink-0 size-9 cursor-pointer"
-            disabled={!input.trim()}
+            disabled={!input.trim() || status === 'streaming'}
             aria-label="Send message"
           >
             <ArrowUp className="size-5" />

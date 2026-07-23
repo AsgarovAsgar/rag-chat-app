@@ -1,6 +1,6 @@
 import { useChatStore, type Source } from "../store/chatStore";
 
-const { startStream, finishStream, failStream, setSources, appendToken } = useChatStore.getState()
+const { startStream, finishStream, failStream, setStreamConversationId, setSources, appendToken } = useChatStore.getState()
 
 let controller: AbortController | null = null
 
@@ -8,6 +8,7 @@ function handleEvent(event: string, data: string): string | null {
   switch(event) {
     case 'conversation': {
       const parsed = JSON.parse(data) as { conversationId: string }
+      setStreamConversationId(parsed.conversationId)
       return parsed.conversationId
     }
 
@@ -44,7 +45,7 @@ export async function streamChat(
 ): Promise<string | null> {
   let resultId: string | null = conversationId ?? null
   controller = new AbortController()
-  startStream(message)
+  startStream(message, conversationId ?? null)
 
   try {
     const res = await fetch('/api/chat', {
