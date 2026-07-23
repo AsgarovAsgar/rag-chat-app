@@ -1,7 +1,11 @@
 import {
   BadRequestException,
   Controller,
+  Delete,
   Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
   Post,
   UploadedFile,
   UseInterceptors,
@@ -52,4 +56,10 @@ export class DocumentsController {
   async list() {
     return this.documentsService.findAll();
   }
+
+  @Delete(':id')
+  @HttpCode(204)
+  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
+  await this.documentsService.remove(id);
+}
 }
