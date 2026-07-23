@@ -1,20 +1,7 @@
 import { useRef } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { uploadDocument } from '@/api/documents'
 
-async function uploadDocument(file: File) {
-  const formData = new FormData()
-  formData.append('file', file)
-
-  const res = await fetch('/api/documents', {
-    method: 'POST',
-    body: formData
-  })
-
-  if (!res.ok) 
-    throw new Error(`Upload failed: ${res.status}`)
-
-  return res.json()
-}
 
 export function UploadForm() {
   const inputRef = useRef<HTMLInputElement>(null)

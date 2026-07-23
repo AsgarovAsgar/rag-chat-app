@@ -1,20 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { UploadForm } from './UploadForm'
+import { fetchDocuments } from '@/api/documents'
 
-interface Document {
-  id: string
-  filename: string
-  status: 'pending' | 'processing' | 'ready' | 'failed'
-  error: string | null
-  sizeBytes: number
-  createdAt: string
-}
-
-async function fetchDocuments(): Promise<Document[]> {
-  const res = await fetch('/api/documents')
-  if (!res.ok) throw new Error(`Failed to load documents: ${res.status}`)
-  return res.json()
-}
 
 export function DocumentsPanel() {
   const { data, isPending, isError, error } = useQuery({

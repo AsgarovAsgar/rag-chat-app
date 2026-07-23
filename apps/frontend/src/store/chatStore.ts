@@ -1,11 +1,6 @@
 import { create } from "zustand";
+import { type Source } from "@/api/messages";
 
-export interface Source {
-  documentId: string
-  filename: string
-  content: string
-  similarity: number
-}
 
 type ChatStatus = 'idle' | 'streaming' | 'error'
 
