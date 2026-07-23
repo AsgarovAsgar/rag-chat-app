@@ -1,4 +1,9 @@
-import type { Source } from "../store/chatStore";
+export interface Source {
+  documentId: string
+  filename: string
+  content: string
+  similarity: number
+}
 
 export interface Message {
   id: string

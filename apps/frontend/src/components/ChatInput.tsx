@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { useNavigate, useParams } from "react-router";
 import { ArrowUp, Square } from "lucide-react";
+import { queryKeys } from "@/api/queryKeys";
 
 export function ChatInput() {
   const queryClient = useQueryClient()
@@ -32,7 +33,10 @@ export function ChatInput() {
     // cache, move to the conversation page, and drop the optimistic bubble
     // (the fetched messages already contain the user message)
     const onConversationCreated = async (id: string) => {
-      await queryClient.fetchQuery({queryKey: ['messages', id], queryFn: () => fetchMessages(id)})
+      await queryClient.fetchQuery({
+        queryKey: queryKeys.messages(id), 
+        queryFn: () => fetchMessages(id)
+      })
       navigate(`/c/${id}`)
       useChatStore.getState().clearPendingUserMessage()
     }
@@ -41,12 +45,12 @@ export function ChatInput() {
 
     if(returnedId) {
       await queryClient.fetchQuery({
-        queryKey: ['messages', returnedId], 
+        queryKey: queryKeys.messages(returnedId), 
         queryFn: () => fetchMessages(returnedId)
       })
     }
 
-    queryClient.invalidateQueries({queryKey: ['conversations']})
+    queryClient.invalidateQueries({queryKey: queryKeys.conversations})
     useChatStore.getState().clearStream()
   }
 

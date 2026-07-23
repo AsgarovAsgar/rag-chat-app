@@ -5,14 +5,16 @@ import { MessageBubble } from "./MessageBubble"
 import { CitedText } from "./CitedText";
 import { extractCitations } from "@/lib/citations"
 import { useLayoutEffect, useRef } from "react"
-import { fetchMessages } from "../api/messages"
+import { fetchMessages } from "@/api/messages"
+import { queryKeys } from '@/api/queryKeys'
+
 
 export function MessageList() {
   const {conversationId} = useParams()
   const bottomRef = useRef<HTMLDivElement>(null)
 
   const {data, isError, error} = useQuery({
-    queryKey: ['messages', conversationId],
+    queryKey: queryKeys.messages(conversationId!),
     queryFn: () => fetchMessages(conversationId!),
     enabled: !!conversationId
   })

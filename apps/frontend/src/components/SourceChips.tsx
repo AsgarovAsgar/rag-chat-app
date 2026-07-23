@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Source } from "../store/chatStore";
+import type { Source } from "@/api/messages";
 import { cn } from "@/lib/utils";
 
 export function SourceChips({ sources, cited }: { sources: Source[], cited: Set<number> }) {

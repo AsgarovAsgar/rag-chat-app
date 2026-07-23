@@ -1,4 +1,5 @@
-import { useChatStore, type Source } from "../store/chatStore";
+import { useChatStore } from "../store/chatStore";
+import type { Source } from "./messages";
 
 const { startStream, finishStream, failStream, setStreamConversationId, setSources, appendToken } = useChatStore.getState()
 

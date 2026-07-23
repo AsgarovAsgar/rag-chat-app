@@ -9,18 +9,8 @@ import { DocumentsPanel } from '@/components/DocumentsPanel'
 import { AppBrand } from '@/components/app-brand'
 import { NavUser } from '@/components/nav-user'
 import { Link, useMatch } from 'react-router'
-
-interface Conversation {
-  id: string
-  title: string | null
-  createdAt: string
-}
-
-async function fetchConversations(): Promise<Conversation[]> {
-  const res = await fetch('/api/conversations')
-  if (!res.ok) throw new Error(`Failed to load conversations: ${res.status}`)
-  return res.json()
-}
+import { fetchConversations } from '@/api/conversations'
+import { queryKeys } from '@/api/queryKeys'
 
 const user = {
   name: 'Asgar',
@@ -29,14 +19,11 @@ const user = {
 }
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
-  // const conversationId = useChatStore(s => s.conversationId)
-  // const selectConversation = useChatStore(s => s.selectConversation)
-
   const match = useMatch('/c/:conversationId')
   const activeId = match?.params.conversationId
 
   const { data, isPending, isError, error } = useQuery({
-    queryKey: ['conversations'],
+    queryKey: queryKeys.conversations,
     queryFn: fetchConversations,
   })
 
