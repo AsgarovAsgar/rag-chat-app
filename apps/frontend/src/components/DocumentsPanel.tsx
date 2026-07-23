@@ -1,11 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { UploadForm } from './UploadForm'
 import { fetchDocuments } from '@/api/documents'
+import { queryKeys } from '@/api/queryKeys'
 
 
 export function DocumentsPanel() {
   const { data, isPending, isError, error } = useQuery({
-    queryKey: ['documents'],
+    queryKey: queryKeys.documents,
     queryFn: fetchDocuments,
     refetchInterval: (query) => {
       const docs = query.state.data

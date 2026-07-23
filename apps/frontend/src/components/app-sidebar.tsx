@@ -10,6 +10,7 @@ import { AppBrand } from '@/components/app-brand'
 import { NavUser } from '@/components/nav-user'
 import { Link, useMatch } from 'react-router'
 import { fetchConversations } from '@/api/conversations'
+import { queryKeys } from '@/api/queryKeys'
 
 const user = {
   name: 'Asgar',
@@ -22,7 +23,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const activeId = match?.params.conversationId
 
   const { data, isPending, isError, error } = useQuery({
-    queryKey: ['conversations'],
+    queryKey: queryKeys.conversations,
     queryFn: fetchConversations,
   })
 

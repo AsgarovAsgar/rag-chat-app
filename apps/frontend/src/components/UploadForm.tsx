@@ -1,6 +1,7 @@
 import { useRef } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { uploadDocument } from '@/api/documents'
+import { queryKeys } from '@/api/queryKeys'
 
 
 export function UploadForm() {
@@ -10,7 +11,7 @@ export function UploadForm() {
   const mutation = useMutation({
     mutationFn: uploadDocument,
     onSuccess: () => {
-      queryClient.invalidateQueries({queryKey: ['documents']})
+      queryClient.invalidateQueries({queryKey: queryKeys.documents})
       if(inputRef.current) inputRef.current.value = ''
     }
   })
