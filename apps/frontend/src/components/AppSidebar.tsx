@@ -4,9 +4,9 @@ import { Link, useMatch } from 'react-router'
 
 import { fetchConversations } from '@/api/conversations'
 import { queryKeys } from '@/api/queryKeys'
-import { AppBrand } from '@/components/app-brand'
+import { AppBrand } from '@/components/AppBrand'
 import { DocumentsPanel } from '@/components/DocumentsPanel'
-import { NavUser } from '@/components/nav-user'
+import { NavUser } from '@/components/NavUser'
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
   SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton,
