@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { useDocumentStatusUpdates } from '@/hooks/useDocumentStatusUpdates'
 
 const statusVariant = {
   pending: 'secondary',
@@ -29,16 +30,12 @@ function formatBytes(bytes: number) {
 }
 
 export function DocumentsPage() {
+  useDocumentStatusUpdates()
+
   const queryClient = useQueryClient()
   const { data: documents, isPending, error } = useQuery({
     queryKey: queryKeys.documents,
-    queryFn: fetchDocuments,
-    refetchInterval: (query) => {
-      const docs = query.state.data
-      if (!docs) return false
-      const isBusy = docs.some((d) => d.status === 'pending' || d.status === 'processing')
-      return isBusy ? 2000 : false
-    },
+    queryFn: fetchDocuments
   })
 
   const invalidate = () =>
