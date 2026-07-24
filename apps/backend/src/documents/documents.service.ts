@@ -1,4 +1,9 @@
-import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { Pool } from 'pg';
 import { PG_POOL } from '../database/database.module';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -66,14 +71,14 @@ export class DocumentsService {
       `DELETE FROM documents WHERE id = $1 RETURNING storage_path`,
       [id],
     );
-    if(rows.length === 0) {
-      throw new NotFoundException(`Document ${id} not found`)
+    if (rows.length === 0) {
+      throw new NotFoundException(`Document ${id} not found`);
     }
-    const storagePath = rows[0].storage_path
-    if(storagePath) {
-      await rm(storagePath, {force: true})
+    const storagePath = rows[0].storage_path;
+    if (storagePath) {
+      await rm(storagePath, { force: true });
     }
-  } 
+  }
 
   async retry(id: string): Promise<void> {
     const { rows } = await this.pool.query<{ id: string }>(
