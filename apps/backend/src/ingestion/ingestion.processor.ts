@@ -7,6 +7,7 @@ import { ExtractionService } from './ingestion.extraction';
 import { DocumentRow } from '../documents/documents.service';
 import { ChunkingService } from './ingestion.chunking';
 import { EmbeddingsService } from '../embeddings/embeddings.service';
+import { DocumentsGateway } from '../events/documents.gateway';
 
 export interface IngestionJobData {
   documentId: string;
@@ -21,6 +22,7 @@ export class IngestionProcessor extends WorkerHost {
     private readonly extractionService: ExtractionService,
     private readonly chunkingService: ChunkingService,
     private readonly embeddingsService: EmbeddingsService,
+    private readonly documentsGateway: DocumentsGateway,
   ) {
     super();
   }
@@ -100,6 +102,11 @@ export class IngestionProcessor extends WorkerHost {
       } finally {
         client.release();
       }
+      this.documentsGateway.emitDocumentStatus({
+        id: documentId,
+        status: 'ready',
+        error: null,
+      });
       this.logger.log(
         `Stored ${chunks.length} chunks; document ${documentId} ready`,
       );
@@ -120,5 +127,10 @@ export class IngestionProcessor extends WorkerHost {
       `UPDATE documents SET status = $2, error = $3, updated_at = now() WHERE id = $1`,
       [id, status, error ?? null],
     );
+    this.documentsGateway.emitDocumentStatus({
+      id,
+      status,
+      error: error ?? null,
+    });
   }
 }
