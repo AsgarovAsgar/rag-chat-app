@@ -6,6 +6,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { IngestionModule } from './ingestion/ingestion.module';
 import { RetrievalModule } from './retrieval/retrieval.module';
 import { ChatModule } from './chat/chat.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ChatModule } from './chat/chat.module';
     IngestionModule,
     RetrievalModule,
     ChatModule,
+    EventsModule,
   ],
 })
 export class AppModule {}
