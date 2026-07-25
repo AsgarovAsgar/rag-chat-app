@@ -46,6 +46,9 @@ importers:
       mammoth:
         specifier: ^1.12.0
         version: 1.12.0
+      node-pg-migrate:
+        specifier: ^8.0.4
+        version: 8.0.4(@types/pg@8.20.0)(pg@8.22.0)
       openai:
         specifier: ^6.46.0
         version: 6.46.0(ws@8.21.1)(zod@4.4.3)
@@ -116,9 +119,6 @@ importers:
       jest:
         specifier: ^30.0.0
         version: 30.4.2(@types/node@24.13.3)(ts-node@10.9.2(@types/node@24.13.3)(typescript@5.9.3))
-      node-pg-migrate:
-        specifier: ^8.0.4
-        version: 8.0.4(@types/pg@8.20.0)(pg@8.22.0)
       prettier:
         specifier: ^3.4.2
         version: 3.9.5
