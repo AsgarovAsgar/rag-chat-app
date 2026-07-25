@@ -17,7 +17,7 @@ import { mkdirSync } from 'node:fs';
 import { extname } from 'node:path';
 import { DocumentsService } from './documents.service';
 
-const UPLOAD_DIR = './uploads';
+const UPLOAD_DIR = process.env.UPLOAD_DIR ?? './uploads';
 const ALLOWED_EXTENSIONS = new Set(['.pdf', '.docx', '.txt', '.md']);
 
 @Controller('documents')

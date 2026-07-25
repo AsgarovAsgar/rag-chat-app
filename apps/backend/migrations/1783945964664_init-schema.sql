@@ -1,4 +1,6 @@
 -- Up Migration
+CREATE EXTENSION IF NOT EXISTS vector;
+
 CREATE TABLE documents (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   filename text NOT NULL,
