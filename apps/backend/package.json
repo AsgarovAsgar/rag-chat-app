@@ -27,6 +27,7 @@
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/platform-socket.io": "^11.1.28",
+    "@nestjs/serve-static": "^5.0.5",
     "@nestjs/websockets": "^11.1.28",
     "bullmq": "^5.80.2",
     "class-transformer": "^0.5.1",

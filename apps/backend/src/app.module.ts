@@ -7,6 +7,8 @@ import { IngestionModule } from './ingestion/ingestion.module';
 import { RetrievalModule } from './retrieval/retrieval.module';
 import { ChatModule } from './chat/chat.module';
 import { EventsModule } from './events/events.module';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'node:path';
 
 @Module({
   imports: [
@@ -26,6 +28,10 @@ import { EventsModule } from './events/events.module';
     RetrievalModule,
     ChatModule,
     EventsModule,
+    ServeStaticModule.forRoot({
+      rootPath: join(__dirname, '..', '..', 'frontend', 'dist'),
+      exclude: ['/api/{*path}'],
+    }),
   ],
 })
 export class AppModule {}
