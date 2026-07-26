@@ -14,7 +14,7 @@ export class ExtractionService {
         const buffer = await readFile(storagePath);
         const parser = new PDFParse({ data: buffer });
         try {
-          const result = await parser.getText();
+          const result = await parser.getText({ pageJoiner: '' });
           return result.text;
         } finally {
           await parser.destroy();
