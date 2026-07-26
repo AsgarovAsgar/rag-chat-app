@@ -13,6 +13,8 @@ export interface IngestionJobData {
   documentId: string;
 }
 
+const MIN_CONTENT_CHARS = 200;
+
 @Processor('ingestion')
 export class IngestionProcessor extends WorkerHost {
   private readonly logger = new Logger(IngestionProcessor.name);
@@ -50,15 +52,18 @@ export class IngestionProcessor extends WorkerHost {
       const text = await this.extractionService.extractText(
         document.storage_path,
       );
+      const trimmed = text.trim();
+      if (trimmed.length < MIN_CONTENT_CHARS) {
+        throw new Error(
+          `Only ${trimmed.length} characters of text extracted from ${document.filename} — is it a scanned PDF with no text layer?`,
+        );
+      }
       this.logger.log(
         `Extracted ${text.length} chars from ${document.filename}`,
       );
 
       // 2. chunk
       const chunks = this.chunkingService.chunk(text);
-      if (chunks.length === 0) {
-        throw new Error(`No text content extracted from ${document.filename}`);
-      }
       this.logger.log(
         `Split into ${chunks.length} chunks (avg ${Math.round(text.length / chunks.length)} chars)`,
       );
