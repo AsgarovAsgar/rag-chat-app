@@ -9,6 +9,7 @@ import { ChatModule } from './chat/chat.module';
 import { EventsModule } from './events/events.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'node:path';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { join } from 'node:path';
       rootPath: join(__dirname, '..', '..', 'frontend', 'dist'),
       exclude: ['/api/{*path}'],
     }),
+    AuthModule,
   ],
 })
 export class AppModule {}
