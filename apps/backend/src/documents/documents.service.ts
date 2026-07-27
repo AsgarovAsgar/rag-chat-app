@@ -12,6 +12,7 @@ import { rm } from 'node:fs/promises';
 
 export interface DocumentRow {
   id: string;
+  user_id: string;
   filename: string;
   mime_type: string;
   size_bytes: number;
@@ -38,38 +39,44 @@ export class DocumentsService {
     @InjectQueue('ingestion') private readonly ingestionQueue: Queue,
   ) {}
 
-  async createFromUpload(file: Express.Multer.File): Promise<DocumentRow> {
+  async createFromUpload(
+    file: Express.Multer.File,
+    userId: string,
+  ): Promise<DocumentRow> {
     const { rows } = await this.pool.query<DocumentRow>(
-      `INSERT INTO documents (filename, mime_type, size_bytes, storage_path, status)
-       VALUES ($1, $2, $3, $4, 'pending')
+      `INSERT INTO documents (user_id, filename, mime_type, size_bytes, storage_path, status)
+       VALUES ($1, $2, $3, $4, $5, 'pending')
        RETURNING *`,
-      [file.originalname, file.mimetype, file.size, file.path],
+      [userId, file.originalname, file.mimetype, file.size, file.path],
     );
 
     const document = rows[0];
 
     await this.ingestionQueue.add('ingest-document', {
       documentId: document.id,
+      userId,
     });
 
     return document;
   }
 
-  async findAll(): Promise<DocumentListItem[]> {
+  async findAll(userId: string): Promise<DocumentListItem[]> {
     const { rows } = await this.pool.query<DocumentListItem>(
       `SELECT id, filename, status, error,
-            size_bytes AS "sizeBytes",
-            created_at AS "createdAt"
-      FROM documents
-      ORDER BY created_at DESC`,
+              size_bytes AS "sizeBytes",
+              created_at AS "createdAt"
+       FROM documents
+       WHERE user_id = $1
+       ORDER BY created_at DESC`,
+      [userId],
     );
     return rows;
   }
 
-  async remove(id: string): Promise<void> {
+  async remove(id: string, userId: string): Promise<void> {
     const { rows } = await this.pool.query<{ storage_path: string | null }>(
-      `DELETE FROM documents WHERE id = $1 RETURNING storage_path`,
-      [id],
+      `DELETE FROM documents WHERE id = $1 AND user_id = $2 RETURNING storage_path`,
+      [id, userId],
     );
     if (rows.length === 0) {
       throw new NotFoundException(`Document ${id} not found`);
@@ -80,19 +87,19 @@ export class DocumentsService {
     }
   }
 
-  async retry(id: string): Promise<void> {
+  async retry(id: string, userId: string): Promise<void> {
     const { rows } = await this.pool.query<{ id: string }>(
       `UPDATE documents
-      SET status = 'pending', error = NULL, updated_at = now()
-      WHERE id = $1 AND status = 'failed'
-      RETURNING id`,
-      [id],
+       SET status = 'pending', error = NULL, updated_at = now()
+       WHERE id = $1 AND user_id = $2 AND status = 'failed'
+       RETURNING id`,
+      [id, userId],
     );
 
     if (rows.length === 0) {
       const { rows: existing } = await this.pool.query(
-        `SELECT 1 FROM documents WHERE id = $1`,
-        [id],
+        `SELECT 1 FROM documents WHERE id = $1 AND user_id = $2`,
+        [id, userId],
       );
       if (existing.length === 0) {
         throw new NotFoundException(`Document ${id} not found`);
@@ -100,6 +107,9 @@ export class DocumentsService {
       throw new ConflictException('Only failed documents can be retried');
     }
 
-    await this.ingestionQueue.add('ingest-document', { documentId: id });
+    await this.ingestionQueue.add('ingest-document', {
+      documentId: id,
+      userId,
+    });
   }
 }

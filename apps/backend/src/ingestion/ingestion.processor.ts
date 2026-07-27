@@ -11,6 +11,7 @@ import { DocumentsGateway } from '../events/documents.gateway';
 
 export interface IngestionJobData {
   documentId: string;
+  userId: string;
 }
 
 const MIN_CONTENT_CHARS = 200;
@@ -30,11 +31,11 @@ export class IngestionProcessor extends WorkerHost {
   }
 
   async process(job: Job<IngestionJobData>): Promise<void> {
-    const { documentId } = job.data;
+    const { documentId, userId } = job.data;
     this.logger.log(`Ingesting document ${documentId}`);
 
     try {
-      await this.setStatus(documentId, 'processing');
+      await this.setStatus(documentId, userId, 'processing');
 
       // extract → chunk → embed → store chunks
       // 1. extract
@@ -85,10 +86,11 @@ export class IngestionProcessor extends WorkerHost {
         ]);
         for (let i = 0; i < chunks.length; i++) {
           await client.query(
-            `INSERT INTO chunks (document_id, chunk_index, content, embedding)
-       VALUES ($1, $2, $3, $4::vector)`,
+            `INSERT INTO chunks (document_id, user_id, chunk_index, content, embedding)
+             VALUES ($1, $2, $3, $4, $5::vector)`,
             [
               documentId,
+              document.user_id,
               chunks[i].index,
               chunks[i].text,
               JSON.stringify(vectors[i]),
@@ -109,6 +111,7 @@ export class IngestionProcessor extends WorkerHost {
       }
       this.documentsGateway.emitDocumentStatus({
         id: documentId,
+        userId,
         status: 'ready',
         error: null,
       });
@@ -118,13 +121,14 @@ export class IngestionProcessor extends WorkerHost {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.logger.error(`Ingestion failed for doc ${documentId}: ${message}`);
-      await this.setStatus(documentId, 'failed', message);
+      await this.setStatus(documentId, userId, 'failed', message);
       throw err;
     }
   }
 
   private async setStatus(
     id: string,
+    userId: string,
     status: 'processing' | 'ready' | 'failed',
     error?: string,
   ): Promise<void> {
@@ -134,6 +138,7 @@ export class IngestionProcessor extends WorkerHost {
     );
     this.documentsGateway.emitDocumentStatus({
       id,
+      userId,
       status,
       error: error ?? null,
     });

@@ -36,19 +36,24 @@ export class ChatService {
     });
   }
 
-  async listConversations(): Promise<ConversationRow[]> {
+  async listConversations(userId: string): Promise<ConversationRow[]> {
     const { rows } = await this.pool.query<ConversationRow>(
       `SELECT id, title, created_at AS "createdAt"
        FROM conversations
+       WHERE user_id = $1
        ORDER BY created_at DESC`,
+      [userId],
     );
     return rows;
   }
 
-  async getMessages(conversationId: string): Promise<MessageRow[]> {
+  async getMessages(
+    conversationId: string,
+    userId: string,
+  ): Promise<MessageRow[]> {
     const { rows: found } = await this.pool.query(
-      'SELECT id FROM conversations WHERE id = $1',
-      [conversationId],
+      'SELECT id FROM conversations WHERE id = $1 AND user_id = $2',
+      [conversationId, userId],
     );
     if (found.length === 0) {
       throw new NotFoundException('Conversation not found');
@@ -64,11 +69,14 @@ export class ChatService {
     return rows;
   }
 
-  private async ensureConversation(dto: ChatDto): Promise<string> {
+  private async ensureConversation(
+    dto: ChatDto,
+    userId: string,
+  ): Promise<string> {
     if (dto.conversationId) {
       const { rows } = await this.pool.query(
-        'SELECT id FROM conversations WHERE id = $1',
-        [dto.conversationId],
+        'SELECT id FROM conversations WHERE id = $1 AND user_id = $2',
+        [dto.conversationId, userId],
       );
       if (rows.length === 0) {
         throw new NotFoundException('Conversation not found');
@@ -77,8 +85,8 @@ export class ChatService {
     }
 
     const { rows } = await this.pool.query<{ id: string }>(
-      'INSERT INTO conversations (title) VALUES ($1) RETURNING id',
-      [dto.message.slice(0, 60)],
+      'INSERT INTO conversations (user_id, title) VALUES ($1, $2) RETURNING id',
+      [userId, dto.message.slice(0, 60)],
     );
     return rows[0].id;
   }
@@ -120,8 +128,8 @@ export class ChatService {
     res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
   }
 
-  async chat(dto: ChatDto, res: Response): Promise<void> {
-    const conversationId = await this.ensureConversation(dto);
+  async chat(dto: ChatDto, userId: string, res: Response): Promise<void> {
+    const conversationId = await this.ensureConversation(dto, userId);
     const history = await this.loadHistory(conversationId);
 
     await this.pool.query(
@@ -140,7 +148,7 @@ export class ChatService {
     let sources: SearchResult[];
 
     try {
-      sources = await this.retrievalService.search(dto.message, TOP_K);
+      sources = await this.retrievalService.search(dto.message, userId, TOP_K);
     } catch (err) {
       this.logger.error('Retrieval failed', err);
       this.send(res, 'error', { message: 'Retrieval failed' });
