@@ -21,6 +21,7 @@ import { RegisterDto } from './dto/register.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { clearAuthCookies, setAuthCookies } from './auth.cookies';
 import { SessionsService } from './sessions.service';
+import { Public } from './public.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -30,11 +31,13 @@ export class AuthController {
     private readonly jwtService: JwtService,
   ) {}
 
+  @Public()
   @Post('register')
   register(@Body() dto: RegisterDto): Promise<AuthUser> {
     return this.authService.register(dto);
   }
 
+  @Public()
   @Post('login')
   async login(
     @Body() dto: LoginDto,
@@ -58,6 +61,7 @@ export class AuthController {
     return user;
   }
 
+  @Public()
   @Post('refresh')
   @HttpCode(200)
   async refresh(
@@ -80,6 +84,7 @@ export class AuthController {
     return user;
   }
 
+  @Public()
   @Post('logout')
   @HttpCode(204)
   async logout(
