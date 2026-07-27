@@ -1,3 +1,5 @@
+import { apiFetch } from './http'
+
 export interface Conversation {
   id: string
   title: string | null
@@ -5,7 +7,7 @@ export interface Conversation {
 }
 
 export async function fetchConversations(): Promise<Conversation[]> {
-  const res = await fetch('/api/conversations')
+  const res = await apiFetch('/api/conversations')
   if (!res.ok) throw new Error(`Failed to load conversations: ${res.status}`)
   return res.json()
 }
