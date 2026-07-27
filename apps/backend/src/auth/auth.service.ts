@@ -1,12 +1,25 @@
-import { ConflictException, Inject, Injectable } from '@nestjs/common';
-import { hash } from '@node-rs/argon2';
+import {
+  ConflictException,
+  Inject,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { hash, hashSync, verify } from '@node-rs/argon2';
 import { DatabaseError, Pool } from 'pg';
 import { PG_POOL } from '../database/database.module';
 import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { randomBytes } from 'node:crypto';
 
 export interface AuthUser {
   id: string;
   email: string;
+}
+
+interface UserCredentialsRow {
+  id: string;
+  email: string;
+  password_hash: string;
 }
 
 @Injectable()
@@ -30,5 +43,39 @@ export class AuthService {
       }
       throw err;
     }
+  }
+
+  /**
+   * Hash of a throwaway password, computed once at startup. Verified against
+   * when no user matches, so "unknown email" costs the same time as
+   * "wrong password".
+   */
+  private readonly dummyHash = hashSync(randomBytes(32).toString('hex'));
+
+  async login(dto: LoginDto): Promise<AuthUser> {
+    const { rows } = await this.pool.query<UserCredentialsRow>(
+      `SELECT id, email, password_hash FROM users WHERE email = $1`,
+      [dto.email],
+    );
+
+    const user = rows[0];
+    const passwordValid = await verify(
+      user?.password_hash ?? this.dummyHash,
+      dto.password,
+    );
+
+    if (!user || !passwordValid) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    return { id: user.id, email: user.email };
+  }
+
+  async findById(id: string): Promise<AuthUser | undefined> {
+    const { rows } = await this.pool.query<AuthUser>(
+      `SELECT id, email FROM users WHERE id = $1`,
+      [id],
+    );
+    return rows[0];
   }
 }
