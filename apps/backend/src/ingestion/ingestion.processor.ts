@@ -31,11 +31,11 @@ export class IngestionProcessor extends WorkerHost {
   }
 
   async process(job: Job<IngestionJobData>): Promise<void> {
-    const { documentId } = job.data;
+    const { documentId, userId } = job.data;
     this.logger.log(`Ingesting document ${documentId}`);
 
     try {
-      await this.setStatus(documentId, 'processing');
+      await this.setStatus(documentId, userId, 'processing');
 
       // extract → chunk → embed → store chunks
       // 1. extract
@@ -111,6 +111,7 @@ export class IngestionProcessor extends WorkerHost {
       }
       this.documentsGateway.emitDocumentStatus({
         id: documentId,
+        userId,
         status: 'ready',
         error: null,
       });
@@ -120,13 +121,14 @@ export class IngestionProcessor extends WorkerHost {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       this.logger.error(`Ingestion failed for doc ${documentId}: ${message}`);
-      await this.setStatus(documentId, 'failed', message);
+      await this.setStatus(documentId, userId, 'failed', message);
       throw err;
     }
   }
 
   private async setStatus(
     id: string,
+    userId: string,
     status: 'processing' | 'ready' | 'failed',
     error?: string,
   ): Promise<void> {
@@ -136,6 +138,7 @@ export class IngestionProcessor extends WorkerHost {
     );
     this.documentsGateway.emitDocumentStatus({
       id,
+      userId,
       status,
       error: error ?? null,
     });
