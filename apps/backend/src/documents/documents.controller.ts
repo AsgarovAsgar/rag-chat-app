@@ -16,6 +16,8 @@ import { randomUUID } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { extname } from 'node:path';
 import { DocumentsService } from './documents.service';
+import { CurrentUser } from '../auth/current-user.decorator';
+import type { AuthenticatedUser } from '../auth/authenticated-user';
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR ?? './uploads';
 const ALLOWED_EXTENSIONS = new Set(['.pdf', '.docx', '.txt', '.md']);
@@ -47,25 +49,34 @@ export class DocumentsController {
       },
     }),
   )
-  async upload(@UploadedFile() file?: Express.Multer.File) {
+  async upload(
+    @CurrentUser() user: AuthenticatedUser,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
     if (!file) throw new BadRequestException('No file uploaded');
-    return this.documentsService.createFromUpload(file);
+    return this.documentsService.createFromUpload(file, user.id);
   }
 
   @Get()
-  async list() {
-    return this.documentsService.findAll();
+  async list(@CurrentUser() user: AuthenticatedUser) {
+    return this.documentsService.findAll(user.id);
   }
 
   @Delete(':id')
   @HttpCode(204)
-  async remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    await this.documentsService.remove(id);
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<void> {
+    await this.documentsService.remove(id, user.id);
   }
 
   @Post(':id/retry')
   @HttpCode(202)
-  async retry(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
-    await this.documentsService.retry(id);
+  async retry(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<void> {
+    await this.documentsService.retry(id, user.id);
   }
 }
