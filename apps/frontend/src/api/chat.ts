@@ -1,5 +1,6 @@
 import { useChatStore } from "@/store/chatStore";
 
+import { apiFetch } from './http'
 import type { Source } from "./messages";
 
 const { startStream, finishStream, failStream, setStreamConversationId, setSources, appendToken } = useChatStore.getState()
@@ -50,7 +51,7 @@ export async function streamChat(
   startStream(message, conversationId ?? null)
 
   try {
-    const res = await fetch('/api/chat', {
+    const res = await apiFetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message, conversationId: conversationId ?? undefined }),

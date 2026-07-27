@@ -8,6 +8,10 @@ import { ConversationPage } from '@/pages/ConversationPage'
 import { DocumentsPage } from '@/pages/DocumentsPage'
 import { HomePage } from '@/pages/HomePage'
 
+import { RequireAuth } from './components/RequireAuth'
+import { LoginPage } from './pages/LoginPage'
+import { RegisterPage } from './pages/RegisterPage'
+
 function AppLayout() {
   return (
     <TooltipProvider>
@@ -29,10 +33,14 @@ function AppLayout() {
 function App() {
   return (
     <Routes>
-      <Route element={<AppLayout />}>
-        <Route index element={<HomePage />} />
-        <Route path="c/:conversationId" element={<ConversationPage />} />
-        <Route path='documents' element={<DocumentsPage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route element={<RequireAuth />}>
+        <Route element={<AppLayout />}>
+          <Route index element={<HomePage />} />
+          <Route path="c/:conversationId" element={<ConversationPage />} />
+          <Route path='documents' element={<DocumentsPage />} />
+        </Route>
       </Route>
     </Routes>
   )

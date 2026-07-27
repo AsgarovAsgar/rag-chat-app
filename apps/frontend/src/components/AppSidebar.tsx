@@ -12,12 +12,6 @@ import {
   SidebarMenuItem, SidebarRail,
 } from '@/components/ui/sidebar'
 
-const user = {
-  name: 'Asgar',
-  email: 'asgarovasgar28@gmail.com',
-  avatar: '',
-}
-
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const match = useMatch('/c/:conversationId')
   const activeId = match?.params.conversationId
@@ -68,7 +62,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       <SidebarFooter>
-        <NavUser user={user} />
+        <NavUser />
       </SidebarFooter>
 
       <SidebarRail />
