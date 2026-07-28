@@ -1,9 +1,25 @@
 # RAG Chat
 
+[![CI](https://github.com/AsgarovAsgar/rag-chat-app/actions/workflows/ci.yml/badge.svg)](https://github.com/AsgarovAsgar/rag-chat-app/actions/workflows/ci.yml)
+
 A full-stack, multi-user Retrieval-Augmented Generation (RAG) chat application: upload your documents, ask questions, and get **streamed answers with inline citations** grounded in the document content.
+
+**[Live demo → chat.comospace.dev](https://chat.comospace.dev/)**
+
+Sign in with **`demo@example.com`** / **`demo1234`**. The account is pre-loaded with four documents — this project's own spec, the original RAG paper, the pgvector README, and RFC 7519 (JWT) — so there's something to ask about immediately.
 
 <!-- TODO: add screenshot here -->
 <!-- ![RAG Chat screenshot](docs/screenshot.png) -->
+
+### Questions worth trying
+
+| Question | What it shows |
+|---|---|
+| *What is retrieval-augmented generation, and how does it differ from a purely parametric model?* | A grounded answer from the original RAG paper, with citations you can open and verify against the source |
+| *Which distance operators does pgvector provide, and which one is cosine similarity?* | The same question routed to a different document entirely — retrieval picks the right source without being told which to look in |
+| *What are the registered claim names in a JWT?* | A precise, checkable list pulled out of a 30-page RFC |
+| *What was in scope for v1 of this project, and what was listed as a stretch goal?* | This app answering questions about its own planning document — auth was a stretch goal, and it shipped |
+| *What is the company's parental leave policy?* | "I don't know", with **no sources** — the model answers only from retrieved context and declines rather than inventing one |
 
 ## Features
 
@@ -93,10 +109,8 @@ docker compose up -d
 # 2. Dependencies
 pnpm install
 
-# 3. Backend environment — create apps/backend/.env
+# 3. Backend environment — create apps/backend/.env (see Environment below)
 #    DATABASE_URL=postgres://rag:rag@localhost:5432/rag
-#    REDIS_HOST=localhost
-#    REDIS_PORT=6379
 #    JWT_SECRET=any-long-random-string
 #    OPENAI_API_KEY=sk-...
 
@@ -112,11 +126,27 @@ pnpm --filter frontend dev
 
 Open the frontend, register an account, and upload a document to get started.
 
-To build the production image instead:
+### Environment
+
+| Variable | Required | Default | Notes |
+|---|---|---|---|
+| `DATABASE_URL` | yes | — | Postgres connection string; the app refuses to boot without it |
+| `JWT_SECRET` | yes | — | Signs the 15-minute access token; also refuses to boot without it |
+| `OPENAI_API_KEY` | yes | — | Embeddings and generation |
+| `REDIS_HOST` | no | `localhost` | BullMQ connection |
+| `REDIS_PORT` | no | `6379` | |
+| `REDIS_PASSWORD` | no | — | Required by most managed Redis providers |
+| `PORT` | no | `3000` | HTTP port |
+| `UPLOAD_DIR` | no | `./uploads` | Where uploads land before ingestion; must be writable and, in production, persistent |
+| `NODE_ENV` | no | — | Set to `production` when deploying — it flips the `Secure` flag on the auth cookies |
+
+### Production image
+
+The backend serves the frontend build and runs migrations on boot, so the whole app is one container:
 
 ```bash
 docker build -t rag-chat .
-docker run -p 3000:3000 --env-file apps/backend/.env rag-chat
+docker run -p 3000:3000 --env-file apps/backend/.env -e NODE_ENV=production rag-chat
 ```
 
 ## API
