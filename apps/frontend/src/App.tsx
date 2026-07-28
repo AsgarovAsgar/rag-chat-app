@@ -11,6 +11,7 @@ import { HomePage } from '@/pages/HomePage'
 import { HeaderTitle } from './components/HeaderTitle'
 import { RequireAuth } from './components/RequireAuth'
 import { LoginPage } from './pages/LoginPage'
+import { NotFoundPage } from './pages/NotFoundPage'
 import { RegisterPage } from './pages/RegisterPage'
 
 function AppLayout() {
@@ -43,6 +44,7 @@ function App() {
           <Route path='documents' element={<DocumentsPage />} />
         </Route>
       </Route>
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
 }
