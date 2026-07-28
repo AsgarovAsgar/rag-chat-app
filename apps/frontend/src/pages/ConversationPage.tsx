@@ -13,7 +13,7 @@ export function ConversationPage() {
   return (
     <section className="flex min-h-0 flex-1 flex-col">
       <div ref={containerRef} className="flex-1 overflow-y-auto px-4 pt-4 pb-2 scroll-pb-2">
-        <div className="mx-auto max-w-3xl space-y-2">
+        <div className="mx-auto max-w-3xl">
           <MessageList />
           <StreamingMessage />
         </div>

@@ -80,7 +80,7 @@ export function ChatInput() {
             value={input}
             onChange={handleTextareaChange}
             onKeyDown={handleKeyDown}
-            placeholder="Ask something about your documents..."
+            placeholder="Ask anything"
             className="min-h-0 resize-none rounded-none border-0 p-0 text-base md:text-base placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 scrollbar-thin dark:bg-transparent"
             rows={1}
           />

@@ -28,15 +28,22 @@ export function StreamingMessage() {
 
   return (
     <>
-      {pendingUserMessage && <MessageBubble role="user">{pendingUserMessage}</MessageBubble>}
-      {status === 'streaming' && !streamingText && (
-        <MessageBubble role="assistant">
-          <span className="text-muted-foreground animate-pulse">Thinking…</span>
-        </MessageBubble>
+      {pendingUserMessage && (
+        <div className="mt-2">
+          <MessageBubble role="user">{pendingUserMessage}</MessageBubble>
+        </div>
       )}
-      {streamingText && <MessageBubble role="assistant"><CitedText text={streamingText} /></MessageBubble>}
-      {sources.length > 0 && <SourceChips sources={sources} cited={extractCitations(streamingText)} />}
-      {error && <p className="text-destructive">{error}</p>}
+      {/* mirrors one <li> in MessageList: 8px above, sources at their own mt-1.5 */}
+      <div className="mt-2">
+        {status === 'streaming' && !streamingText && (
+          <MessageBubble role="assistant">
+            <span className="text-muted-foreground animate-pulse">Thinking…</span>
+          </MessageBubble>
+        )}
+        {streamingText && <MessageBubble role="assistant"><CitedText text={streamingText} /></MessageBubble>}
+        {sources.length > 0 && <SourceChips sources={sources} cited={extractCitations(streamingText)} />}
+      </div>
+      {error && <p className="mt-2 text-destructive">{error}</p>}
       <div ref={bottomRef} />
     </>
   )
