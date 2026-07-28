@@ -1,5 +1,7 @@
 # RAG Chat Application — PRD
 
+> Planning document, written before implementation. It is kept as a record of the original intent and is deliberately not updated as the project evolves — see the [README](../README.md) for what actually shipped.
+
 ## 1. Problem Statement
 Knowledge workers and job-seekers alike often have long documents (contracts, reports, research papers, resumes, internal docs) they need to quickly extract answers from, without reading the whole thing. While generic LLM chat tools support ad-hoc file uploads within a single session, they fall short at scale: context windows limit how much (or how many) documents can be considered at once, uploaded content isn't persisted/reused efficiently across sessions, and there's typically no structured way to trace an answer back to its exact source chunk. This product addresses that gap by embedding and indexing documents once, then retrieving only the relevant pieces per query — enabling querying across a growing document collection with verifiable citations back to source.
 
