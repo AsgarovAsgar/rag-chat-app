@@ -56,6 +56,9 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu>
               {isPending && <Spinner className="mx-auto my-2 size-4" />}
               {isError && <p className="px-2 text-sm text-destructive">{error.message}</p>}
+              {data?.length === 0 && (
+                <p className="px-2 text-sm text-muted-foreground">No conversations yet</p>
+              )}
               {data?.map(c => (
                 <SidebarMenuItem key={c.id}>
                   <SidebarMenuButton isActive={c.id === activeId} render={<Link to={`/c/${c.id}`} onClick={closeOnMobile} />}>
