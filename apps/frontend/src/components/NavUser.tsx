@@ -20,6 +20,8 @@ import {
 } from '@/components/ui/sidebar'
 import { useMe } from '@/hooks/useMe'
 
+import { ThemeToggle } from './ThemeToggle'
+
 export function NavUser() {
   const { isMobile } = useSidebar()
   const { data: user } = useMe()
@@ -66,6 +68,8 @@ export function NavUser() {
                 {user.email}
               </DropdownMenuLabel>
             </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <ThemeToggle />
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => logoutMutation.mutate()}

@@ -2,19 +2,13 @@ import { Navigate, Outlet, useLocation } from 'react-router'
 
 import { useMe } from '@/hooks/useMe'
 
+import { Loading } from './Loading'
+
 export function RequireAuth() {
   const location = useLocation()
   const { data: user, isPending, isError, error } = useMe()
 
-  if (isPending) {
-    return (
-      <div className="grid min-h-svh place-items-center">
-        <span className="animate-in fade-in text-sm text-muted-foreground [animation-delay:200ms] [animation-fill-mode:backwards]">
-          Loading…
-        </span>
-      </div>
-    )
-  }
+  if (isPending) return <Loading className="min-h-svh" />
 
   if (isError) {
     return (

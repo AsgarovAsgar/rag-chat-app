@@ -4,6 +4,7 @@ import { RotateCcw, Trash2 } from 'lucide-react'
 import { deleteDocument, fetchDocuments, retryDocument } from '@/api/documents'
 import { queryKeys } from '@/api/queryKeys'
 import { DocumentUpload } from '@/components/DocumentUpload'
+import { Loading } from '@/components/Loading'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -48,7 +49,7 @@ export function DocumentsPage() {
     (deleteMutation.isPending && deleteMutation.variables === id) ||
     (retryMutation.isPending && retryMutation.variables === id)
 
-  if (isPending) return <div className="p-4">Loading…</div>
+    if (isPending) return <Loading />
   if (error) return <div className="p-4 text-destructive">{error.message}</div>
 
   return (
@@ -57,59 +58,68 @@ export function DocumentsPage() {
         <h1 className="text-xl font-medium">Documents</h1>
         <DocumentUpload />
       </div>
-      <Table className="table-fixed">
-        <TableHeader>
-          <TableRow>
-            <TableHead>Filename</TableHead>
-            <TableHead className="w-28">Status</TableHead>
-            <TableHead className="w-24">Size</TableHead>
-            <TableHead className="w-28">Uploaded</TableHead>
-            <TableHead className="w-20" />
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {documents.map((doc) => (
-            <TableRow key={doc.id}>
-              <TableCell className="truncate">{doc.filename}</TableCell>
-              <TableCell>
-                <Badge variant={statusVariant[doc.status]} title={doc.error ?? undefined}>
-                  {doc.status}
-                </Badge>
-              </TableCell>
-              <TableCell>{formatBytes(doc.sizeBytes)}</TableCell>
-              <TableCell>{new Date(doc.createdAt).toLocaleDateString()}</TableCell>
-              <TableCell>
-                <div className="flex justify-end gap-1">
-                  {doc.status === 'failed' && (
+      {documents.length === 0 ? (
+        <div className="rounded-lg border border-dashed p-8 text-center">
+          <p className="text-sm font-medium">No documents yet</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Upload a PDF, DOCX, TXT, or MD file to start asking questions about it.
+          </p>
+        </div>
+      ): (
+        <Table className="table-fixed">
+          <TableHeader>
+            <TableRow>
+              <TableHead>Filename</TableHead>
+              <TableHead className="w-28">Status</TableHead>
+              <TableHead className="w-24">Size</TableHead>
+              <TableHead className="w-28">Uploaded</TableHead>
+              <TableHead className="w-20" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {documents.map((doc) => (
+              <TableRow key={doc.id}>
+                <TableCell className="truncate">{doc.filename}</TableCell>
+                <TableCell>
+                  <Badge variant={statusVariant[doc.status]} title={doc.error ?? undefined}>
+                    {doc.status}
+                  </Badge>
+                </TableCell>
+                <TableCell>{formatBytes(doc.sizeBytes)}</TableCell>
+                <TableCell>{new Date(doc.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-1">
+                    {doc.status === 'failed' && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Retry"
+                        disabled={isRowBusy(doc.id)}
+                        onClick={() => retryMutation.mutate(doc.id)}
+                      >
+                        <RotateCcw />
+                      </Button>
+                    )}
                     <Button
                       variant="ghost"
                       size="icon"
-                      aria-label="Retry"
+                      aria-label="Delete"
                       disabled={isRowBusy(doc.id)}
-                      onClick={() => retryMutation.mutate(doc.id)}
+                      onClick={() => {
+                        if (window.confirm(`Delete "${doc.filename}"?`)) {
+                          deleteMutation.mutate(doc.id)
+                        }
+                      }}
                     >
-                      <RotateCcw />
+                      <Trash2 />
                     </Button>
-                  )}
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Delete"
-                    disabled={isRowBusy(doc.id)}
-                    onClick={() => {
-                      if (window.confirm(`Delete "${doc.filename}"?`)) {
-                        deleteMutation.mutate(doc.id)
-                      }
-                    }}
-                  >
-                    <Trash2 />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   )
 }

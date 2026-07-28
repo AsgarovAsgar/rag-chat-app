@@ -4,7 +4,19 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/inter-v20-latin-regular.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/inter-v20-latin-500.woff2" />
+    <link rel="preload" as="font" type="font/woff2" crossorigin href="/fonts/inter-v20-latin-600.woff2" />
+    <script>
+      // next-themes' own script only runs after the bundle loads; this blocks
+      ;(function () {
+        var t = localStorage.getItem('theme')
+        var dark = t === 'dark' ||
+          ((!t || t === 'system') && matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.classList.toggle('dark', dark)
+      })()
+    </script>
+    <title>RAG Chat</title>
   </head>
   <body>
     <div id="root"></div>
