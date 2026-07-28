@@ -13,6 +13,8 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 
+import { Spinner } from './Loading'
+
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const match = useMatch('/c/:conversationId')
   const activeId = match?.params.conversationId
@@ -52,7 +54,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>Conversations</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {isPending && <p className="px-2 text-sm text-muted-foreground">Loading…</p>}
+              {isPending && <Spinner className="mx-auto my-2 size-4" />}
               {isError && <p className="px-2 text-sm text-destructive">{error.message}</p>}
               {data?.map(c => (
                 <SidebarMenuItem key={c.id}>

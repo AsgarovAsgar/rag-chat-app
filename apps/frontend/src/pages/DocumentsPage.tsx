@@ -4,6 +4,7 @@ import { RotateCcw, Trash2 } from 'lucide-react'
 import { deleteDocument, fetchDocuments, retryDocument } from '@/api/documents'
 import { queryKeys } from '@/api/queryKeys'
 import { DocumentUpload } from '@/components/DocumentUpload'
+import { Loading } from '@/components/Loading'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -48,7 +49,7 @@ export function DocumentsPage() {
     (deleteMutation.isPending && deleteMutation.variables === id) ||
     (retryMutation.isPending && retryMutation.variables === id)
 
-  if (isPending) return <div className="p-4">Loading…</div>
+    if (isPending) return <Loading />
   if (error) return <div className="p-4 text-destructive">{error.message}</div>
 
   return (
