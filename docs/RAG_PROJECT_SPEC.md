@@ -1,5 +1,7 @@
 # RAG Chat Application — Project Spec
 
+> Planning document, written before implementation. It is kept as a record of the original intent and is deliberately not updated as the project evolves — see the [README](../README.md) for what actually shipped. Notably, auth is listed below as a stretch goal; it shipped.
+
 ## Purpose
 Portfolio project demonstrating senior-level frontend + full-stack engineering: a Retrieval-Augmented Generation (RAG) chat system where users upload documents and ask questions answered from their content, with source citations and streamed responses.
 
