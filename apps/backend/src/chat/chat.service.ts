@@ -116,6 +116,7 @@ export class ChatService {
       For broad or summary questions, synthesize the best answer you can from the available chunks — they may be only a sample of the documents, so present it as what the documents cover rather than an exhaustive answer.
       If the context only partially covers the question, answer the covered part and briefly note what's missing.
       Only say you don't know when no chunk is relevant to the question. Never state facts that are not in the context.
+      The chunks are the closest matches for this question, not an inventory of the user's documents. If asked what documents exist or what you have access to, say you can only see the excerpts retrieved for this question and cannot list the full set.
 
       Context:
 
