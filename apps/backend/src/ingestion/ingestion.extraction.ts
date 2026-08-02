@@ -4,9 +4,13 @@ import { extname } from 'node:path';
 import { extractRawText } from 'mammoth';
 import { PDFParse } from 'pdf-parse';
 
+function stripNullBytes(text: string): string {
+  return text.replace(/\0/g, '');
+}
+
 @Injectable()
 export class ExtractionService {
-  async extractText(storagePath: string): Promise<string> {
+  private async readFormat(storagePath: string): Promise<string> {
     const ext = extname(storagePath).toLowerCase();
 
     switch (ext) {
@@ -30,5 +34,9 @@ export class ExtractionService {
       default:
         throw new Error(`Unsupported file extension: ${ext}`);
     }
+  }
+
+  async extractText(storagePath: string): Promise<string> {
+    return stripNullBytes(await this.readFormat(storagePath));
   }
 }
