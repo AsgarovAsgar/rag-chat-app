@@ -18,6 +18,7 @@ import { extname } from 'node:path';
 import { DocumentsService } from './documents.service';
 import { CurrentUser } from '../auth/current-user.decorator';
 import type { AuthenticatedUser } from '../auth/authenticated-user';
+import { Throttle } from '@nestjs/throttler';
 
 const UPLOAD_DIR = process.env.UPLOAD_DIR ?? './uploads';
 const ALLOWED_EXTENSIONS = new Set(['.pdf', '.docx', '.txt', '.md']);
@@ -27,6 +28,7 @@ export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}
 
   @Post()
+  @Throttle({ default: { ttl: 3_600_000, limit: 10 } })
   @UseInterceptors(
     FileInterceptor('file', {
       storage: diskStorage({
