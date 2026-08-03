@@ -22,6 +22,7 @@ import { JwtAuthGuard } from './jwt-auth.guard';
 import { clearAuthCookies, setAuthCookies } from './auth.cookies';
 import { SessionsService } from './sessions.service';
 import { Public } from './public.decorator';
+import { DemoService } from './demo.service';
 
 @Controller('auth')
 export class AuthController {
@@ -29,6 +30,7 @@ export class AuthController {
     private readonly authService: AuthService,
     private readonly sessionsService: SessionsService,
     private readonly jwtService: JwtService,
+    private readonly demoService: DemoService,
   ) {}
 
   @Public()
@@ -96,5 +98,16 @@ export class AuthController {
       await this.sessionsService.revokeFamily(token);
     }
     clearAuthCookies(res);
+  }
+
+  @Public()
+  @Post('demo')
+  async demo(@Res({ passthrough: true }) res: Response): Promise<AuthUser> {
+    const user = await this.demoService.createSandbox();
+    const refreshToken = await this.sessionsService.issue(user.id);
+    const accessToken = await this.jwtService.signAsync({ sub: user.id });
+
+    setAuthCookies(res, accessToken, refreshToken);
+    return user;
   }
 }
