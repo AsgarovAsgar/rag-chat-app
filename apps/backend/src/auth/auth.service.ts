@@ -54,9 +54,7 @@ export class AuthService {
 
   async login(dto: LoginDto): Promise<AuthUser> {
     const { rows } = await this.pool.query<UserCredentialsRow>(
-      `SELECT id, email, password_hash
-     FROM users
-     WHERE email = $1 AND NOT is_demo_seed`,
+      `SELECT id, email, password_hash FROM users WHERE email = $1`,
       [dto.email],
     );
 
