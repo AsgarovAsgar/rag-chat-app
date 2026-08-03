@@ -54,3 +54,9 @@ export async function fetchMe(): Promise<AuthUser | null> {
   if(!res.ok) throw new Error(`Failed to load session: ${res.status}`)
   return res.json()
 }
+
+export async function startDemo(): Promise<AuthUser> {
+  const res = await fetch('/api/auth/demo', { method: 'POST' })
+  if(!res.ok) throw new Error(await readError(res, `Demo failed: ${res.status}`))
+  return res.json()
+}
