@@ -12,10 +12,11 @@ interface AuthFormProps {
   error: string | null
   onSubmit: (credentials: Credentials) => void
   footer: React.ReactNode
+  belowForm: React.ReactNode
 }
 
 export function AuthForm({
-  title, submitLabel, passwordAutoComplete, isPending, error, onSubmit, footer
+  title, submitLabel, passwordAutoComplete, isPending, error, onSubmit, footer, belowForm
 }: AuthFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -27,7 +28,7 @@ export function AuthForm({
 
   return (
     <div className="grid min-h-svh place-items-center p-4">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-sm rounded-xl border bg-card p-6 shadow-sm">
         <h1 className="mb-6 text-center text-2xl font-semibold">{title}</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -63,7 +64,9 @@ export function AuthForm({
           </Button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">{footer}</p>
+        <p className="mt-4 text-center text-sm text-muted-foreground">{footer}</p>
+
+        {belowForm}
       </div>
     </div>
   )

@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router'
 import { login } from '@/api/auth'
 import { queryKeys } from '@/api/queryKeys'
 import { AuthForm } from '@/components/AuthForm'
+import { DemoButton } from '@/components/DemoButton'
 
 export function LoginPage() {
   const navigate = useNavigate()
@@ -29,6 +30,7 @@ export function LoginPage() {
       error={mutation.error?.message ?? null}
       onSubmit={mutation.mutate}
       footer={<>No account? <Link to="/register" className="underline">Create one</Link></>}
+      belowForm={<DemoButton />}
     />
   )
 }

@@ -38,7 +38,7 @@ export function NavUser() {
 
   if (!user) return null
 
-  const displayName = user.email.split('@')[0]
+  const displayName = user.email.endsWith('@demo.invalid') ? 'Demo user' : user.email
   const initial = user.email.charAt(0).toUpperCase()
 
   return (

@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router'
 import { type Credentials, login, register } from '@/api/auth'
 import { queryKeys } from '@/api/queryKeys'
 import { AuthForm } from '@/components/AuthForm'
+import { DemoButton } from '@/components/DemoButton'
 
 export function RegisterPage() {
   const navigate = useNavigate()
@@ -29,6 +30,14 @@ export function RegisterPage() {
       error={mutation.error?.message ?? null}
       onSubmit={mutation.mutate}
       footer={<>Already have an account? <Link to="/login" className="underline">Sign in</Link></>}
+      belowForm={
+        <>
+          <DemoButton />
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            Registering creates a new, empty workspace from the demo won't carry over.
+          </p>
+        </>
+      }
     />
   )
 }

@@ -81,8 +81,17 @@ export class DocumentsService {
     if (rows.length === 0) {
       throw new NotFoundException(`Document ${id} not found`);
     }
+
     const storagePath = rows[0].storage_path;
-    if (storagePath) {
+    if (!storagePath) {
+      return;
+    }
+
+    const { rows: stillReferenced } = await this.pool.query(
+      `SELECT 1 FROM documents WHERE storage_path = $1 LIMIT 1`,
+      [storagePath],
+    );
+    if (stillReferenced.length === 0) {
       await rm(storagePath, { force: true });
     }
   }
