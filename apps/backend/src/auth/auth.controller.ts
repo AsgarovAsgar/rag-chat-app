@@ -23,6 +23,7 @@ import { clearAuthCookies, setAuthCookies } from './auth.cookies';
 import { SessionsService } from './sessions.service';
 import { Public } from './public.decorator';
 import { DemoService } from './demo.service';
+import { Throttle } from '@nestjs/throttler';
 
 @Controller('auth')
 export class AuthController {
@@ -102,6 +103,7 @@ export class AuthController {
 
   @Public()
   @Post('demo')
+  @Throttle({ default: { ttl: 3_600_000, limit: 3 } })
   async demo(@Res({ passthrough: true }) res: Response): Promise<AuthUser> {
     const user = await this.demoService.createSandbox();
     const refreshToken = await this.sessionsService.issue(user.id);

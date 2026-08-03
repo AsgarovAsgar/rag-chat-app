@@ -6,7 +6,7 @@ A full-stack, multi-user Retrieval-Augmented Generation (RAG) chat application: 
 
 **[Live demo → chat.comospace.dev](https://chat.comospace.dev/)**
 
-Sign in with **`demo@example.com`** / **`demo1234`**. The account is pre-loaded with four documents — this project's own spec, the original RAG paper, the pgvector README, and RFC 7519 (JWT) — so there's something to ask about immediately.
+Click **Try the demo** — no signup, no password. You get your own private workspace, pre-loaded with four documents: this project's own spec, the original RAG paper, the pgvector README, and RFC 7519 (JWT). Upload and delete freely; nothing you do affects anyone else's.
 
 <!-- TODO: add screenshot here -->
 <!-- ![RAG Chat screenshot](docs/screenshot.png) -->
@@ -19,7 +19,7 @@ Sign in with **`demo@example.com`** / **`demo1234`**. The account is pre-loaded 
 | *Which distance operators does pgvector provide, and which one is cosine similarity?* | The same question routed to a different document entirely — retrieval picks the right source without being told which to look in |
 | *What are the registered claim names in a JWT?* | A precise, checkable list pulled out of a 30-page RFC |
 | *What was in scope for v1 of this project, and what was listed as a stretch goal?* | This app answering questions about its own planning document — auth was a stretch goal, and it shipped |
-| *What is the company's parental leave policy?* | "I don't know", with **no sources** — the model answers only from retrieved context and declines rather than inventing one |
+| *What is the company's parental leave policy?* | "I don't know", with **no sources** — nothing in the corpus covers it, and the model declines rather than inventing an answer |
 
 ## Features
 
@@ -30,6 +30,7 @@ Sign in with **`demo@example.com`** / **`demo1234`**. The account is pre-loaded 
 - **Grounded answers** — the model is instructed to answer only from retrieved context and say "I don't know" otherwise
 - **Accounts and per-user isolation** — email/password registration, argon2id password hashing, and a cookie session; every document, chunk, conversation, and status event belongs to exactly one user
 - **Document management** — delete a document (with its chunks and stored file) or retry a failed ingestion
+- **One-click demo sandboxes** — "Try the demo" provisions a throwaway account and clones a seed corpus into it, so every visitor gets a private, pre-loaded workspace they can upload to and delete from without affecting anyone else; embeddings are copied inside Postgres rather than recomputed, so a new sandbox costs no API calls
 
 ## Tech stack
 
