@@ -21,6 +21,14 @@ const CHAT_MODEL = 'gpt-4o-mini';
 const HISTORY_LIMIT = 10;
 const TOP_K = 5;
 
+/** Turns of history fed to the rewriter. Enough to resolve a reference without
+ *  paying for the whole conversation on every message. */
+const REWRITE_HISTORY_TURNS = 6;
+/** A rewrite is one short sentence; this is a cap on runaway output, not a target. */
+const REWRITE_MAX_TOKENS = 100;
+const REWRITE_MODEL = 'gpt-4o-mini';
+const REWRITE_TIMEOUT_MS = 3000;
+
 @Injectable()
 export class ChatService {
   private readonly client: OpenAI;
@@ -103,6 +111,58 @@ export class ChatService {
       [conversationId, HISTORY_LIMIT],
     );
     return rows;
+  }
+
+  private async rewriteQuery(
+    message: string,
+    history: HistoryMessage[],
+  ): Promise<string> {
+    if (history.length === 0) return message;
+
+    const transcript = history
+      .slice(-REWRITE_HISTORY_TURNS)
+      .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+      .join('\n');
+
+    try {
+      const completion = await this.client.chat.completions.create(
+        {
+          model: REWRITE_MODEL,
+          temperature: 0,
+          max_tokens: REWRITE_MAX_TOKENS,
+          messages: [
+            {
+              role: 'system',
+              content: `Rewrite the user's latest message into a standalone search query for a document retrieval system.
+
+Resolve pronouns and references ("it", "that", "the second one") using the conversation. Keep the user's own wording and topic — do not answer, do not add information, do not broaden the question.
+If the message is already standalone, return it unchanged.
+Return only the rewritten query, with no preamble or quotes.
+
+Conversation so far:
+${transcript}`,
+            },
+            { role: 'user', content: message },
+          ],
+        },
+        { signal: AbortSignal.timeout(REWRITE_TIMEOUT_MS) },
+      );
+
+      const rewritten = completion.choices[0]?.message?.content?.trim();
+      if (!rewritten) return message;
+
+      this.logger.log(`Rewrote query: "${message}" → "${rewritten}"`);
+      return rewritten;
+    } catch (err) {
+      if (err instanceof Error && err.name === 'TimeoutError') {
+        this.logger.warn(
+          `Query rewrite timed out after ${REWRITE_TIMEOUT_MS}ms`,
+        );
+      } else {
+        this.logger.warn('Query rewrite failed, using original message', err);
+      }
+      return message;
+    }
   }
 
   private buildSystemPrompt(sources: SearchResult[]): string {
