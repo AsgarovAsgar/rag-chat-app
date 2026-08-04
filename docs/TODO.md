@@ -8,29 +8,29 @@ Backlog for the RAG chat app.
 
 | # | Task | Importance | Time |
 |---|---|---|---|
-| 1.1 | NUL-byte strip in ingestion | 🔴 | 30m |
+| 1.1 | NUL-byte strip in ingestion | ✅ done | — |
 | 2.1 | Spend protection | 🔴 blocking a public post | 15m–3h |
 | 2.2 | Demo corpus check | 🟠 | 30m |
 | 3.1 | Conversations CRUD | 🟠 | 3–5h |
 | 3.2 | Documents page UX | 🟡 mixed, see per-item | 15m–4h each |
 | 3.3 | Auto-generated titles | 🟡 | 1–2h |
-| 4.1 | Query rewriting | 🟠 | 2–4h |
+| 4.1 | Query rewriting | ✅ done | — |
 | 5.1 | Query routing | ⚪ optional | 3–5h |
 | 5.2 | MCP server | ⚪ optional | 1–2 days |
 | 6 | Old open items | ⚪ mostly | 10m–3h each |
 
-Rough total for everything through §4.1, excluding the optional §5: **2–3 focused days.**
+Rough total for what remains through §4, excluding the optional §5: **1.5–2.5 focused days.**
 
 ---
 
 ## 1. Live in production — fix first
 
 ### 1.1 NUL-byte strip in ingestion
-**🔴 Critical · ~30 min**
+**✅ DONE — shipped in `8b803d4`, confirmed in `main`.**
 
-Highest value-to-effort item on this list: a handful of lines, and it's the only thing here that's actively broken for a stranger right now.
+Built as designed below: module-level `stripNullBytes`, private `readFormat()`, public `extractText()` wrapper in `ingestion.extraction.ts`. Design notes kept for the reasoning.
 
-**Why:** Postgres `text` cannot store `0x00`, and PDF text layers (especially LaTeX/arXiv output) carry them. Ingestion dies with `invalid byte sequence for encoding "UTF8": 0x00`, and the raw Postgres error is shown to the user in the documents list. A visitor uploading a LaTeX PDF hits this today.
+**Why it mattered:** Postgres `text` cannot store `0x00`, and PDF text layers (especially LaTeX/arXiv output) carry them. Ingestion died with `invalid byte sequence for encoding "UTF8": 0x00`, and the raw Postgres error was shown to the user in the documents list — the Lewis et al. RAG paper hit exactly this during demo seeding.
 
 **Where:** `apps/backend/src/ingestion/ingestion.extraction.ts`
 
@@ -142,18 +142,19 @@ The page works — table, status badges, delete, retry, live WS status updates. 
 ## 4. Retrieval quality
 
 ### 4.1 Query rewriting for follow-up questions
-**🟠 High · ~2–4 h**
+**✅ DONE 2026-08-04** — branch `feat/query-rewriting`, 2 commits.
 
-The best story-to-effort ratio on this list. Contained to `chat.service.ts`, no schema change, no frontend work.
+`rewriteQuery()` in `chat.service.ts` resolves the latest message against the last 6 turns via `gpt-4o-mini` at `temperature: 0`, and `chat()` retrieves on the result. Retrieval-only: `dto.message` is still what is stored and what the answer prompt sees.
 
-**Why:** `chat.service.ts` embeds the raw user message. Conversation history goes to the LLM but never to the retriever, so "what about the second one?" retrieves on those literal words and returns garbage. This is the single biggest retrieval-quality gap, and it's a genuinely good technical story for a post.
+- **Skipped entirely on turn 1** (`history.length === 0`) — nothing to resolve, and it is the demo's most common path.
+- **Fails soft in four ways** — empty history, empty response, thrown error, or a 3 s `AbortSignal.timeout` — all returning the original message. The call sits *inside* the existing try/catch around `search`, because after `flushHeaders()` an uncaught throw is a dead stream with no `done` and no `error`, not a 500.
+- **Ordering is load-bearing:** `loadHistory` runs before the user-message INSERT, so `history` excludes the current turn; the rewrite runs *after* `flushHeaders` and the `conversation` event, so its latency lands while the user already sees their message and a thinking indicator.
+- **Prompt is dedented to column 0.** The transcript interpolates as multiple lines, so an indented template literal would scramble the `User:`/`Assistant:` structure the rewriter depends on to resolve references.
+- **Verified:** turn 1 logs nothing; `"How is that different from pgvector?"` → `"How is the retriever in the RAG paper different from pgvector?"` with sources spanning both documents; an already-standalone question round-tripped unchanged (the over-rewriting regression check).
+- **Not taken:** a regex pre-filter to skip the call on messages with no pronoun. Costs one wasted round-trip (~300–600 ms) per standalone follow-up. Rejected as English-only heuristic complexity in a 30-line method — revisit if the latency is ever perceptible.
 
-**Rough shape:** before `retrievalService.search`, if history is non-empty, make a cheap LLM call that rewrites the message into a standalone query given the last N turns. Feed the rewrite to the retriever, keep the original for display and for the answer prompt. Watch: added latency before the `sources` event (the SSE `conversation` event already fires early, so the user isn't staring at nothing); skip the rewrite on the first message of a conversation.
-
-The variance in the estimate is prompt iteration — the code is maybe an hour, getting rewrites that don't distort the question is the rest.
-
-### 4.2 Per-document retrieval cap — DESIGNED, DECLINED
-Full design is preserved in memory `rag-demo-launch-plan`. Previously declined in favour of rewording the README questions ("no, it does work like that"). Listed here only so it isn't lost — do not treat as pending work.
+### 4.2 Per-document retrieval cap — ✅ SHIPPED
+Built at `topK = 5` with `MAX_PER_DOCUMENT = 3` and `CANDIDATE_POOL = 30` (`de27e25`, in `main`) — a `rank_in_document` CTE in `retrieval.service.ts` stops one document's cluster from taking every slot on a comparative question. Composes with §4.1 but does not overlap it: the cap fixes *ranking*, the rewrite fixes *the query text*. (This section previously read "DESIGNED, DECLINED" — that was stale.)
 
 ---
 
@@ -164,7 +165,7 @@ Context: this maps onto the IBM RAG/Agentic AI curriculum without paying for it,
 ### 5.1 Query routing
 **⚪ Optional · ~3–5 h**
 
-Decide per message: retrieve, answer directly, or ask for clarification. Small, self-contained, genuinely agentic. Natural follow-on from 4.1 since both intercept the message before retrieval — do them in the same round and the second is closer to 2 h.
+Decide per message: retrieve, answer directly, or ask for clarification. Small, self-contained, genuinely agentic. Now a natural follow-on from the shipped §4.1: `rewriteQuery()` already establishes the pre-retrieval interception point, the fail-soft pattern, and the cheap-model call — routing slots in beside it, so this is closer to 2 h than 5.
 
 ### 5.2 MCP server over the document corpus
 **⚪ Optional · ~1–2 days**

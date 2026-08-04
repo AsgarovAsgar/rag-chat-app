@@ -16,17 +16,19 @@ Click **Try the demo** — no signup, no password. You get your own private work
 | Question | What it shows |
 |---|---|
 | *What is retrieval-augmented generation, and how does it differ from a purely parametric model?* | A grounded answer from the original RAG paper, with citations you can open and verify against the source |
-| *Which distance operators does pgvector provide, and which one is cosine similarity?* | The same question routed to a different document entirely — retrieval picks the right source without being told which to look in |
+| *How does the RAG paper's retriever differ from the way pgvector does similarity search?* | One question, sources from **two documents** — a per-document cap stops the closest document's chunks from taking every slot |
 | *What are the registered claim names in a JWT?* | A precise, checkable list pulled out of a 30-page RFC |
 | *What was in scope for v1 of this project, and what was listed as a stretch goal?* | This app answering questions about its own planning document — auth was a stretch goal, and it shipped |
 | *What is the company's parental leave policy?* | "I don't know", with **no sources** — nothing in the corpus covers it, and the model declines rather than inventing an answer |
+
+**Then try a follow-up.** Ask *"What does the RAG paper say about the retriever?"*, and once it answers, just ask *"How is that different from pgvector?"* — the pronoun is resolved against the conversation before the question is embedded, so retrieval sees "the retriever in the RAG paper", not a dangling "that". Follow-ups are where most RAG demos fall over.
 
 ## Features
 
 - **Document ingestion pipeline** — upload PDF / DOCX / TXT / Markdown; files are extracted, chunked, embedded, and indexed asynchronously in a background queue, with live status pushed to the UI over a WebSocket
 - **Streamed chat** — answers stream token-by-token over Server-Sent Events, with an optimistic UI (your message and a thinking indicator appear instantly) and a stop button that aborts mid-stream while keeping the partial answer
 - **Inline citations** — answers include `[n]` markers rendered as superscripts; numbered source chips show only the chunks actually cited, with similarity score and excerpt on click
-- **Conversation history** — conversations persist with their sources; chat history is fed back into the prompt for follow-up questions
+- **Conversation history** — conversations persist with their sources, and history feeds both the answer prompt and retrieval: a follow-up like "how is that different?" is rewritten into a standalone query before it is embedded, so the retriever sees what the pronoun refers to
 - **Grounded answers** — the model is instructed to answer only from retrieved context and say "I don't know" otherwise
 - **Accounts and per-user isolation** — email/password registration, argon2id password hashing, and a cookie session; every document, chunk, conversation, and status event belongs to exactly one user
 - **Document management** — delete a document (with its chunks and stored file) or retry a failed ingestion
@@ -90,6 +92,7 @@ flowchart LR
 - **Cancellation that persists partial answers.** Closing the request aborts the OpenAI stream via `AbortController`, and the partial response is still saved to the conversation.
 - **`ORDER BY` on bare distance** so Postgres actually uses the HNSW index — ordering by a derived similarity expression would force a sequential scan.
 - **`hnsw.iterative_scan = strict_order` for filtered search.** Retrieval filters by owner and by `status = 'ready'`, and those filters are applied *after* the index returns candidates — so a plain HNSW scan can return fewer than top-K rows. Iterative scan lets the index keep pulling until K survivors are found, without giving up ordering.
+- **The retriever gets a rewritten query, the model gets the original.** Chat history reaches the generator, but embedding a raw follow-up ("how is that different?") embeds a dangling pronoun — the second half of the question is never in the vector. A cheap `gpt-4o-mini` pass resolves the message against recent turns before it is embedded, while the stored message and the answer prompt keep the user's own words. It fails soft: empty history, an empty response, an error, or a 3-second timeout all fall back to retrieving on the original message, because a slightly worse search beats a dead stream.
 - **Ownership enforced in SQL, not in the service layer.** `user_id` is a `NOT NULL` column on documents, chunks, and conversations, and every read carries a `WHERE user_id = $n`. A missed check produces a 404, not another tenant's data — there is no code path that fetches a row first and authorizes it afterwards.
 - **Auth in httpOnly cookies, not `localStorage`.** Tokens are unreachable from JavaScript, so an XSS bug cannot exfiltrate a session. The short-lived access token is scoped to `/`; the long-lived refresh token is scoped to `/api/auth`, so it is never sent on ordinary API calls.
 - **Refresh-token rotation with reuse detection.** Each refresh spends its token and mints a successor in the same family. Re-presenting a spent token means it leaked, so the whole family is revoked — with a 30-second grace window, because concurrent tabs racing on the same token is a client race, not theft. On the frontend, a single-flight promise in `apiFetch` collapses parallel 401s into one refresh.
@@ -189,6 +192,5 @@ The original planning documents are kept as a record of the intent the project s
 
 ## Roadmap
 
-- Query rewriting for follow-up questions
 - Backend integration tests and frontend unit tests in CI
 - Per-document filtering at query time ("ask only this file")
