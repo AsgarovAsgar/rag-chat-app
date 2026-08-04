@@ -209,7 +209,8 @@ ${transcript}`,
     let sources: SearchResult[];
 
     try {
-      sources = await this.retrievalService.search(dto.message, userId, TOP_K);
+      const searchQuery = await this.rewriteQuery(dto.message, history);
+      sources = await this.retrievalService.search(searchQuery, userId, TOP_K);
     } catch (err) {
       this.logger.error('Retrieval failed', err);
       this.send(res, 'error', { message: 'Retrieval failed' });
