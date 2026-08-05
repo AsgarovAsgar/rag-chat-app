@@ -10,9 +10,9 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(import.meta.dirname, 'src') }
   },
-  test: {
+    test: {
     environment: 'node',
-    include: ['src/**/*.spec.ts'],
+    include: ['test/**/*.spec.ts'],
     restoreMocks: true
   },
   server: {
