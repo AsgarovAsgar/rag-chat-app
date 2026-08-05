@@ -45,6 +45,7 @@ Click **Try the demo** — no signup, no password. You get your own private work
 | Realtime | Socket.IO (per-user rooms for ingestion status) |
 | Auth | JWT access cookie + rotating refresh tokens, argon2id hashing |
 | AI | OpenAI `text-embedding-3-small` (embeddings), `gpt-4o-mini` (generation) |
+| Testing | Jest + supertest (backend integration, against real Postgres/Redis), Vitest (frontend unit) |
 | Tooling | pnpm workspaces monorepo, raw SQL migrations via node-pg-migrate, Docker Compose, GitHub Actions CI |
 
 ## Architecture
@@ -181,10 +182,12 @@ Ingestion progress is pushed over Socket.IO as `document:status` events, deliver
 apps/
   backend/            # NestJS: auth, ingestion, embeddings, retrieval, chat (SSE), websocket events
     migrations/       # raw SQL migrations (node-pg-migrate)
+    test/             # integration tests against a real Postgres + Redis
   frontend/           # React: chat UI, streaming, citations, document management, auth pages
+    test/             # vitest unit tests
 docs/                 # PRD and project spec, written before implementation
 docker/               # Postgres init (pgvector extension)
-.github/workflows/    # CI: lint + build, both apps
+.github/workflows/    # CI: lint, unit tests, build; integration tests on service containers
 Dockerfile            # production image (frontend build served by the backend)
 ```
 
@@ -192,5 +195,4 @@ The original planning documents are kept as a record of the intent the project s
 
 ## Roadmap
 
-- Backend integration tests and frontend unit tests in CI
 - Per-document filtering at query time ("ask only this file")

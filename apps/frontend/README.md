@@ -14,6 +14,7 @@ src/
   hooks/        # document status subscription, current user
   store/        # zustand — ephemeral stream state only
   lib/          # citation parsing, rehype plugin, query client
+test/           # vitest unit tests
 ```
 
 Server state lives in TanStack Query; only the in-flight stream lives in Zustand. See *Key technical decisions* in the root README for why.
@@ -26,3 +27,5 @@ Server state lives in TanStack Query; only the in-flight stream lives in Zustand
 | `pnpm build` | Type-check and build to `dist/` |
 | `pnpm preview` | Serve the production build locally |
 | `pnpm lint` | ESLint |
+| `pnpm test` | Vitest unit tests, single run |
+| `pnpm test:watch` | Vitest in watch mode |

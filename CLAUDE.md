@@ -20,6 +20,7 @@ pnpm --filter backend start:dev               # API on :3000
 pnpm --filter frontend dev                    # Vite on :5173, proxies /api and /socket.io
 pnpm --filter backend migrate up              # apply migrations
 pnpm --filter backend test:e2e                # integration suite (needs Docker up)
+pnpm --filter frontend test                   # vitest unit tests (no Docker needed)
 ```
 
 Typechecking differs per app and the difference matters:
@@ -41,6 +42,10 @@ Local credentials are `rag/rag/rag`. Production SQL runs only in the Railway das
 
 ## Testing
 
+Both apps keep tests in a `test/` folder, never colocated with source.
+
+### Backend — integration
+
 Backend integration tests live in `apps/backend/test/`, run against a **real Postgres and Redis** — no mocks for infrastructure.
 
 - `test/env.ts` refuses to run unless `DATABASE_URL` ends in `_test`. The suite `TRUNCATE`s, so pointing it at the dev database would wipe it. Create the test DB once with `docker compose exec -T postgres createdb -U rag rag_test`.
@@ -51,6 +56,18 @@ Backend integration tests live in `apps/backend/test/`, run against a **real Pos
 - Jest exits *before* `globalSetup` when no tests match, so a "no tests found" run proves nothing about migrations.
 
 `src/app.setup.ts` exports `configureApp()` so tests and `main.ts` share one bootstrap. `enableShutdownHooks()` stays in `main.ts` — registering signal handlers per test app leaks listeners across the suite.
+
+### Frontend — unit
+
+`apps/frontend/test/*.spec.ts`, vitest, `environment: 'node'` — no jsdom, because nothing under test touches the DOM. Covers `apiFetch`, `rehypeCitations`, and `extractCitations`.
+
+- **Vitest config lives in `vite.config.ts`**, not a separate `vitest.config.ts` — a second config would duplicate the `@` alias and the two would drift. This requires importing `defineConfig` from **`vitest/config`, not `vite`**; otherwise the `test` key is a type error (`TS2769`). Adding `"vitest/config"` to `tsconfig.node.json`'s `types` does *not* fix it — the interface augmentation only fires on a real import.
+- **`tsconfig.test.json` `extends` `tsconfig.app.json`; it must not `references` it.** A referenced project must be `composite: true` and must emit, and the app config is `noEmit` (correct for Vite) — so a reference fails with `TS6306`/`TS6310`. `extends` already inherits the `@/*` paths and strictness. The backend's `rootDir: ".."` fix is *not* needed here: `rootDir` only constrains emit layout, and nothing emits.
+- Test coverage by `tsc -b` comes from listing `tsconfig.test.json` in the **root** `tsconfig.json` references. ESLint needs no config change — `files: ['**/*.{ts,tsx}']` is not scoped to `src`.
+- Because `test/` sits outside `tsconfig.app.json`'s `include`, specs are excluded from the production build by configuration rather than by relying on tree-shaking.
+- **`vitest run` exits 1 when no test files match** — the opposite of the Jest trap above, so a broken glob fails CI loudly.
+- Frontend tests run in the **`verify`** CI job, not `backend-tests`: they need no service containers, and would otherwise wait on Postgres and Redis health checks for nothing.
+- `apiFetch`'s single-flight refresh is the spec that matters. Parallel 401s must collapse into **one** `/api/auth/refresh` — refresh tokens rotate, so a second concurrent refresh presents a spent token and reuse detection revokes the whole family.
 
 ## Traps
 
