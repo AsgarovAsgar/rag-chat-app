@@ -93,6 +93,7 @@ export function ConversationItem({
     <SidebarMenuItem>
       <SidebarMenuButton
         isActive={isActive}
+        title={optimisticTitle ?? conversation.title}
         className="group-hover/menu-item:bg-sidebar-accent group-hover/menu-item:text-sidebar-accent-foreground"
         render={<Link to={`/c/${conversation.id}`} onClick={onNavigate} />}
       >
