@@ -96,14 +96,15 @@ export function ConversationItem({
     <SidebarMenuItem>
       <SidebarMenuButton
         isActive={isActive}
+        className="group-hover/menu-item:bg-sidebar-accent group-hover/menu-item:text-sidebar-accent-foreground"
         render={<Link to={`/c/${conversation.id}`} onClick={onNavigate} />}
       >
         <span>{conversation.title}</span>
       </SidebarMenuButton>
 
-      <DropdownMenu>
+      <DropdownMenu >
         <DropdownMenuTrigger
-          render={<SidebarMenuAction showOnHover className="aria-expanded:bg-muted" />}
+          render={<SidebarMenuAction showOnHover className="cursor-pointer aria-expanded:opacity-100 aria-expanded:text-sidebar-foreground group-focus-within/menu-item:opacity-0 group-hover/menu-item:opacity-100 text-muted-foreground peer-hover/menu-button:text-muted-foreground hover:bg-transparent hover:text-sidebar-foreground"/>}
         >
           <MoreHorizontalIcon />
           <span className="sr-only">More</span>
