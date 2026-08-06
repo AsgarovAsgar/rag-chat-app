@@ -5,6 +5,8 @@ import { Link, useMatch } from 'react-router'
 import { fetchConversations } from '@/api/conversations'
 import { queryKeys } from '@/api/queryKeys'
 import { AppBrand } from '@/components/AppBrand'
+import { ConversationItem } from '@/components/ConversationItem'
+import { Spinner } from '@/components/Loading'
 import { NavUser } from '@/components/NavUser'
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -13,12 +15,10 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 
-import { Spinner } from './Loading'
-
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
-  const match = useMatch('/c/:conversationId')
-  const activeId = match?.params.conversationId
+  const isHomeActive = !!useMatch('/')
   const isDocumentsActive = !!useMatch('/documents')
+  const activeId = useMatch('/c/:conversationId')?.params.conversationId
 
   // navigating leaves the mobile sheet open — it isn't tied to the router
   const { setOpenMobile } = useSidebar()
@@ -33,9 +33,9 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <AppBrand />
-        <SidebarMenu>
+        <SidebarMenu className="gap-0.5">
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="New chat" render={<Link to="/" onClick={closeOnMobile} />}>
+            <SidebarMenuButton tooltip="New chat" render={<Link to="/" onClick={closeOnMobile} />}  isActive={isHomeActive}>
               <MessageSquarePlusIcon />
               <span>New chat</span>
             </SidebarMenuButton>
@@ -50,21 +50,22 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
+        <SidebarGroup className="group-data-[collapsible=icon]:hidden">
           <SidebarGroupLabel>Conversations</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-0.5">
               {isPending && <Spinner className="mx-auto my-2 size-4" />}
               {isError && <p className="px-2 text-sm text-destructive">{error.message}</p>}
               {data?.length === 0 && (
                 <p className="px-2 text-sm text-muted-foreground">No conversations yet</p>
               )}
               {data?.map(c => (
-                <SidebarMenuItem key={c.id}>
-                  <SidebarMenuButton isActive={c.id === activeId} render={<Link to={`/c/${c.id}`} onClick={closeOnMobile} />}>
-                    <span>{c.title ?? 'Untitled'}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <ConversationItem
+                  key={c.id}
+                  conversation={c}
+                  isActive={c.id === activeId}
+                  onNavigate={closeOnMobile}
+                />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>

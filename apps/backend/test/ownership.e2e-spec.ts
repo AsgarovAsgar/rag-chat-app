@@ -104,10 +104,79 @@ describe('ownership and tenant isolation', () => {
         .expect(404);
     });
 
+    it('gets 404 on A conversation delete', async () => {
+      await agentB.delete(`/api/conversations/${conversationAId}`).expect(404);
+    });
+
     it('leaves A rows intact after B tried', async () => {
       await agentB.delete(`/api/documents/${documentAId}`).expect(404);
+      await agentB.delete(`/api/conversations/${conversationAId}`).expect(404);
+
       const docs = await agentA.get('/api/documents').expect(200);
       expect(docs.body as { id: string }[]).toHaveLength(1);
+
+      const convs = await agentA.get('/api/conversations').expect(200);
+      expect(convs.body as { id: string }[]).toHaveLength(1);
+    });
+  });
+
+  describe('conversation delete', () => {
+    it('lets A delete their own conversation', async () => {
+      await agentA.delete(`/api/conversations/${conversationAId}`).expect(204);
+      await agentA.get('/api/conversations').expect(200, []);
+    });
+
+    it('cascades to messages', async () => {
+      await ctx.pool.query(
+        `INSERT INTO messages (conversation_id, role, content)
+         VALUES ($1, 'user', 'hello'), ($1, 'assistant', 'hi')`,
+        [conversationAId],
+      );
+
+      await agentA.delete(`/api/conversations/${conversationAId}`).expect(204);
+
+      const { rows } = await ctx.pool.query(
+        'SELECT id FROM messages WHERE conversation_id = $1',
+        [conversationAId],
+      );
+      expect(rows).toHaveLength(0);
+    });
+
+    it('404s on an unknown id', async () => {
+      await agentA
+        .delete('/api/conversations/00000000-0000-0000-0000-000000000000')
+        .expect(404);
+    });
+
+    it('400s on a malformed id', async () => {
+      await agentA.delete('/api/conversations/not-a-uuid').expect(400);
+    });
+  });
+
+  describe('conversation rename', () => {
+    it('lets A rename their own conversation', async () => {
+      const res = await agentA
+        .patch(`/api/conversations/${conversationAId}`)
+        .send({ title: 'Renamed by A' })
+        .expect(200);
+      expect((res.body as { title: string }).title).toBe('Renamed by A');
+    });
+
+    it('gets 404 on B renaming A conversation', async () => {
+      await agentB
+        .patch(`/api/conversations/${conversationAId}`)
+        .send({ title: 'Owned' })
+        .expect(404);
+
+      const convs = await agentA.get('/api/conversations').expect(200);
+      expect((convs.body as { title: string }[])[0].title).toBe('A private');
+    });
+
+    it('400s on an empty title', async () => {
+      await agentA
+        .patch(`/api/conversations/${conversationAId}`)
+        .send({ title: '' })
+        .expect(400);
     });
   });
 });

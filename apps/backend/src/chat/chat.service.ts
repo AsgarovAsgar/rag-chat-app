@@ -8,13 +8,13 @@ import OpenAI from 'openai';
 import { ConfigService } from '@nestjs/config';
 
 type HistoryMessage = { role: 'user' | 'assistant'; content: string };
-type ConversationRow = { id: string; title: string; created_at: string };
+type ConversationRow = { id: string; title: string; createdAt: string };
 type MessageRow = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   sources: SearchResult[] | null;
-  created_at: string;
+  createdAt: string;
 };
 
 const CHAT_MODEL = 'gpt-4o-mini';
@@ -75,6 +75,33 @@ export class ChatService {
       [conversationId],
     );
     return rows;
+  }
+
+  async removeConversation(id: string, userId: string): Promise<void> {
+    const { rows } = await this.pool.query(
+      'DELETE FROM conversations WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, userId],
+    );
+    if (rows.length === 0) {
+      throw new NotFoundException(`Conversation ${id} not found`);
+    }
+  }
+
+  async renameConversation(
+    id: string,
+    userId: string,
+    title: string,
+  ): Promise<ConversationRow> {
+    const { rows } = await this.pool.query<ConversationRow>(
+      `UPDATE conversations SET title = $3
+       WHERE id = $1 AND user_id = $2
+       RETURNING id, title, created_at AS "createdAt"`,
+      [id, userId, title],
+    );
+    if (rows.length === 0) {
+      throw new NotFoundException(`Conversation ${id} not found`);
+    }
+    return rows[0];
   }
 
   private async ensureConversation(
