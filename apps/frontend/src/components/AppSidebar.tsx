@@ -62,7 +62,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
               {data?.map(c => (
                 <SidebarMenuItem key={c.id}>
                   <SidebarMenuButton isActive={c.id === activeId} render={<Link to={`/c/${c.id}`} onClick={closeOnMobile} />}>
-                    <span>{c.title ?? 'Untitled'}</span>
+                    <span>{c.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
