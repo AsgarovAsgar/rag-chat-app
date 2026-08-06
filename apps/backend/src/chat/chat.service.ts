@@ -87,6 +87,23 @@ export class ChatService {
     }
   }
 
+  async renameConversation(
+    id: string,
+    userId: string,
+    title: string,
+  ): Promise<ConversationRow> {
+    const { rows } = await this.pool.query<ConversationRow>(
+      `UPDATE conversations SET title = $3
+       WHERE id = $1 AND user_id = $2
+       RETURNING id, title, created_at AS "createdAt"`,
+      [id, userId, title],
+    );
+    if (rows.length === 0) {
+      throw new NotFoundException(`Conversation ${id} not found`);
+    }
+    return rows[0];
+  }
+
   private async ensureConversation(
     dto: ChatDto,
     userId: string,

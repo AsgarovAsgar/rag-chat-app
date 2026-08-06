@@ -152,4 +152,31 @@ describe('ownership and tenant isolation', () => {
       await agentA.delete('/api/conversations/not-a-uuid').expect(400);
     });
   });
+
+  describe('conversation rename', () => {
+    it('lets A rename their own conversation', async () => {
+      const res = await agentA
+        .patch(`/api/conversations/${conversationAId}`)
+        .send({ title: 'Renamed by A' })
+        .expect(200);
+      expect((res.body as { title: string }).title).toBe('Renamed by A');
+    });
+
+    it('gets 404 on B renaming A conversation', async () => {
+      await agentB
+        .patch(`/api/conversations/${conversationAId}`)
+        .send({ title: 'Owned' })
+        .expect(404);
+
+      const convs = await agentA.get('/api/conversations').expect(200);
+      expect((convs.body as { title: string }[])[0].title).toBe('A private');
+    });
+
+    it('400s on an empty title', async () => {
+      await agentA
+        .patch(`/api/conversations/${conversationAId}`)
+        .send({ title: '' })
+        .expect(400);
+    });
+  });
 });
