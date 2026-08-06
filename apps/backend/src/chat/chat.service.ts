@@ -77,6 +77,16 @@ export class ChatService {
     return rows;
   }
 
+  async removeConversation(id: string, userId: string): Promise<void> {
+    const { rows } = await this.pool.query(
+      'DELETE FROM conversations WHERE id = $1 AND user_id = $2 RETURNING id',
+      [id, userId],
+    );
+    if (rows.length === 0) {
+      throw new NotFoundException(`Conversation ${id} not found`);
+    }
+  }
+
   private async ensureConversation(
     dto: ChatDto,
     userId: string,

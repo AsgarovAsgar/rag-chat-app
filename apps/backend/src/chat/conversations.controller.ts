@@ -1,4 +1,11 @@
-import { Controller, Get, Param, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import type { AuthenticatedUser } from '../auth/authenticated-user';
 import { CurrentUser } from '../auth/current-user.decorator';
 import { ChatService } from './chat.service';
@@ -18,5 +25,14 @@ export class ConversationsController {
     @CurrentUser() user: AuthenticatedUser,
   ) {
     return this.chatService.getMessages(id, user.id);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: AuthenticatedUser,
+  ): Promise<void> {
+    await this.chatService.removeConversation(id, user.id);
   }
 }
