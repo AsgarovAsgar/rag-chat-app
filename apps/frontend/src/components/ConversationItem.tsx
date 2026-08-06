@@ -1,10 +1,14 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from 'lucide-react'
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 
 import { type Conversation, deleteConversation, renameConversation } from '@/api/conversations'
 import { queryKeys } from '@/api/queryKeys'
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar'
 
@@ -19,7 +23,9 @@ export function ConversationItem({
 }) {
   const { isMobile } = useSidebar()
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [isEditing, setIsEditing] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
 
   const rename = useMutation({
     mutationFn: (title: string) => renameConversation(conversation.id, title),
@@ -49,6 +55,7 @@ export function ConversationItem({
       queryClient.setQueryData<Conversation[]>(queryKeys.conversations, old =>
         old?.filter(c => c.id !== conversation.id)
       )
+      if (isActive) navigate('/')
       return { previous }
     },
     onError: (_err, _vars, context) => {
@@ -108,12 +115,36 @@ export function ConversationItem({
             <PencilIcon />
             <span>Rename</span>
           </DropdownMenuItem>
-          <DropdownMenuItem variant="destructive" onClick={() => remove.mutate()}>
+          <DropdownMenuItem variant="destructive" onClick={() => setConfirmOpen(true)}>
             <Trash2Icon />
             <span>Delete</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete conversation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete “{conversation.title}” and all of its
+              messages. This can’t be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                setConfirmOpen(false)
+                remove.mutate()
+              }} 
+              variant="destructive"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SidebarMenuItem>
   )
 }
