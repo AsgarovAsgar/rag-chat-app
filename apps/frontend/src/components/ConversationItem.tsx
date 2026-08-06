@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar'
+import { useChatStore } from '@/store/chatStore'
 
 export function ConversationItem({
   conversation,
@@ -26,6 +27,7 @@ export function ConversationItem({
   const navigate = useNavigate()
   const [isEditing, setIsEditing] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const isStreaming = useChatStore(s => s.status === 'streaming' && s.streamConversationId === conversation.id)
 
   const rename = useMutation({
     mutationFn: (title: string) => renameConversation(conversation.id, title),
@@ -115,7 +117,11 @@ export function ConversationItem({
             <PencilIcon />
             <span>Rename</span>
           </DropdownMenuItem>
-          <DropdownMenuItem variant="destructive" onClick={() => setConfirmOpen(true)}>
+          <DropdownMenuItem 
+            variant="destructive" 
+            disabled={isStreaming}
+            onClick={() => setConfirmOpen(true)}
+          >
             <Trash2Icon />
             <span>Delete</span>
           </DropdownMenuItem>
@@ -134,11 +140,11 @@ export function ConversationItem({
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction 
+              variant="destructive"
               onClick={() => {
                 setConfirmOpen(false)
                 remove.mutate()
               }} 
-              variant="destructive"
             >
               Delete
             </AlertDialogAction>
