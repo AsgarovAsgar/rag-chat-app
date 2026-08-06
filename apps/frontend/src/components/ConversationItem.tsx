@@ -26,28 +26,22 @@ export function ConversationItem({
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [isEditing, setIsEditing] = useState(false)
+  const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const isStreaming = useChatStore(s => s.status === 'streaming' && s.streamConversationId === conversation.id)
 
   const rename = useMutation({
     mutationFn: (title: string) => renameConversation(conversation.id, title),
-    onMutate: title => {
-      const previous = queryClient.getQueryData<Conversation[]>(queryKeys.conversations)
-      queryClient.setQueryData<Conversation[]>(queryKeys.conversations, old =>
-        old?.map(c => (c.id === conversation.id ? { ...c, title } : c))
-      )
-      return { previous }
-    },
-    onError: (_err, _title, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(queryKeys.conversations, context.previous)
-      }
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.conversations })
+      setOptimisticTitle(null)
     },
     onSuccess: updated => {
       queryClient.setQueryData<Conversation[]>(queryKeys.conversations, old =>
         old?.map(c => (c.id === updated.id ? updated : c))
       )
-    }
+      setOptimisticTitle(null)
+    },
   })
 
   const remove = useMutation({
@@ -70,7 +64,10 @@ export function ConversationItem({
   if (isEditing) {
     const commit = (value: string) => {
       const title = value.trim()
-      if (title && title !== conversation.title) rename.mutate(title)
+      if (title && title !== conversation.title) {
+        setOptimisticTitle(title)
+        rename.mutate(title)
+      }
       setIsEditing(false)
     }
 
@@ -99,7 +96,7 @@ export function ConversationItem({
         className="group-hover/menu-item:bg-sidebar-accent group-hover/menu-item:text-sidebar-accent-foreground"
         render={<Link to={`/c/${conversation.id}`} onClick={onNavigate} />}
       >
-        <span>{conversation.title}</span>
+        <span>{optimisticTitle ?? conversation.title}</span>
       </SidebarMenuButton>
 
       <DropdownMenu >
