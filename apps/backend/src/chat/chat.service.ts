@@ -8,13 +8,13 @@ import OpenAI from 'openai';
 import { ConfigService } from '@nestjs/config';
 
 type HistoryMessage = { role: 'user' | 'assistant'; content: string };
-type ConversationRow = { id: string; title: string; created_at: string };
+type ConversationRow = { id: string; title: string; createdAt: string };
 type MessageRow = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   sources: SearchResult[] | null;
-  created_at: string;
+  createdAt: string;
 };
 
 const CHAT_MODEL = 'gpt-4o-mini';
