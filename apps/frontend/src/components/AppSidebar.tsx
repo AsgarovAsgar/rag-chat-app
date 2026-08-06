@@ -5,6 +5,8 @@ import { Link, useMatch } from 'react-router'
 import { fetchConversations } from '@/api/conversations'
 import { queryKeys } from '@/api/queryKeys'
 import { AppBrand } from '@/components/AppBrand'
+import { ConversationItem } from '@/components/ConversationItem'
+import { Spinner } from '@/components/Loading'
 import { NavUser } from '@/components/NavUser'
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -12,8 +14,6 @@ import {
   SidebarMenuItem, SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar'
-
-import { Spinner } from './Loading'
 
 export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
   const match = useMatch('/c/:conversationId')
@@ -60,11 +60,12 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
                 <p className="px-2 text-sm text-muted-foreground">No conversations yet</p>
               )}
               {data?.map(c => (
-                <SidebarMenuItem key={c.id}>
-                  <SidebarMenuButton isActive={c.id === activeId} render={<Link to={`/c/${c.id}`} onClick={closeOnMobile} />}>
-                    <span>{c.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <ConversationItem
+                  key={c.id}
+                  conversation={c}
+                  isActive={c.id === activeId}
+                  onNavigate={closeOnMobile}
+                />
               ))}
             </SidebarMenu>
           </SidebarGroupContent>
