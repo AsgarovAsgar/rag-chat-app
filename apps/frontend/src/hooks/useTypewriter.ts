@@ -1,4 +1,3 @@
-// hooks/useTypewriter.ts
 import { useEffect, useRef, useState } from 'react'
 
 const CHAR_MS = 25
