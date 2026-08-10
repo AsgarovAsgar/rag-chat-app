@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar'
+import { useTypewriter } from '@/hooks/useTypewriter'
 import { useChatStore } from '@/store/chatStore'
 
 export function ConversationItem({
@@ -29,6 +30,8 @@ export function ConversationItem({
   const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const isStreaming = useChatStore(s => s.status === 'streaming' && s.streamConversationId === conversation.id)
+  const animatingId = useChatStore(s => s.titleAnimatingId)
+  const displayTitle = useTypewriter(conversation.title, animatingId === conversation.id)
 
   const rename = useMutation({
     mutationFn: (title: string) => renameConversation(conversation.id, title),
@@ -97,7 +100,7 @@ export function ConversationItem({
         className="group-hover/menu-item:bg-sidebar-accent group-hover/menu-item:text-sidebar-accent-foreground"
         render={<Link to={`/c/${conversation.id}`} onClick={onNavigate} />}
       >
-        <span>{optimisticTitle ?? conversation.title}</span>
+        <span>{optimisticTitle ?? displayTitle}</span>
       </SidebarMenuButton>
 
       <DropdownMenu >
