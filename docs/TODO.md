@@ -13,13 +13,13 @@ Backlog for the RAG chat app.
 | 2.2 | Demo corpus check | ✅ done | — |
 | 3.1 | Conversations CRUD | ✅ done | — |
 | 3.2 | Documents page UX | 🟡 mixed, see per-item | 15m–4h each |
-| 3.3 | Auto-generated titles | 🟡 | 1–2h |
+| 3.3 | Auto-generated titles | ✅ done | — |
 | 4.1 | Query rewriting | ✅ done | — |
 | 5.1 | Query routing | ⚪ optional | 3–5h |
 | 5.2 | MCP server | ⚪ optional | 1–2 days |
 | 6 | Old open items | ⚪ mostly | 10m–3h each |
 
-Rough total for what remains through §4, excluding the optional §5 and the deferred §2.1: **~1 focused day**, now almost entirely §3.2 cherry-picks plus §3.3. Was 1.5–2.5 days before §3.1, the prod seed, and the demo verification landed on 2026-08-10.
+Rough total for what remains through §4, excluding the optional §5 and the deferred §2.1: **~half a focused day**, now entirely §3.2 cherry-picks plus the §6 leftovers. Was 1.5–2.5 days before §3.1, the prod seed, the demo verification, and §3.3 all landed on 2026-08-10.
 
 **§2 is parked, not finished** — re-open §2.1 before any public post.
 
@@ -144,9 +144,22 @@ The page works — table, status badges, delete, retry, live WS status updates. 
 - [ ] **⚪ ~10 min** — **Cosmetic:** stray indentation at `DocumentsPage.tsx:52`; `Uploaded` shows date only, no time.
 
 ### 3.3 Auto-generated conversation titles
-**🟡 Medium · ~1–2 h**
+**✅ DONE 2026-08-10** — branch `feat/auto-titles`.
 
-**Why:** related to the above — check what `title` currently holds. If it's the raw first message, a short LLM-generated title is a small, visible polish win and pairs naturally with rename. Cheap because the OpenAI client is already wired in `chat.service.ts`; the design question is whether to generate inline (adds latency) or fire-and-forget after the first exchange.
+`generateTitle()` in `chat.service.ts` produces a 2–4 word title from the user's **first message only** (not the answer), and the sidebar types it in character by character.
+
+**Shape as built:**
+- **Concurrent, not sequential.** The call starts right after the `conversation` SSE event and runs alongside retrieval and answer generation, so its ~400 ms lands in dead time and adds nothing to perceived latency. Titling from the message alone is what makes this possible — including the answer would force the call to wait for the last token.
+- **Delivered on its own `title` SSE event**, not as a field on `done`, so the sidebar updates *mid-stream* rather than when the answer finishes.
+- **`ensureConversation` returns `{ id, isNew }`.** The `isNew` guard is what stops auto-titling from ever overwriting a manual rename — titles are generated once, on creation, and never again.
+- **Fails soft to the `slice(0, 60)` fallback** — `generateTitle` catches everything and resolves `null`, so it never rejects. That is load-bearing: it is started as a floating promise, and a rejection between creation and `await` would be an unhandled rejection. `await titleTask` before every `res.end()` (all three paths) covers both ordering and error surfacing.
+- **Frontend uses `setQueryData`, not `invalidateQueries`** — the event payload already carries `conversationId` and `title`, so no refetch is needed and one row re-renders.
+
+**Two traps worth remembering:**
+- **`AbortSignal.timeout()` does not produce a `TimeoutError` through the OpenAI SDK** — it surfaces as `APIUserAbortError`, so `err.name === 'TimeoutError'` never matches and a timeout logs a full stack trace instead of one warning line. Hoist the signal and check `signal.aborted` in the catch. This bug was present in `rewriteQuery` from the §4.1 round and went unnoticed until the title path hit it; both are fixed now.
+- **Prompt-only length limits get routed around.** Banning "Conversation about" just moved the model to "Understanding X in the context of Y". Concrete input→output examples in the prompt pinned the shape far better than negative rules; `max_tokens: 12` is the hard backstop, plus a code-level trim of quotes/trailing period.
+
+**Recommendation — query client access (noted while reviewing, no action needed):** `lib/queryClient.ts` exports a singleton that `main.tsx` passes to `QueryClientProvider`. Components should keep using `useQueryClient()` (follows the provider, works under a test-local client, decoupled from the module path); only non-React modules — `api/chat.ts` and `api/http.ts`, which have no React context — should import the singleton directly. Rule of thumb: **hook where hooks are legal, import where they aren't.** The one constraint to preserve is that `main.tsx` must pass *that* instance to the provider — replacing it with an inline `new QueryClient()` would silently split the cache, and the non-React writes would land somewhere nothing renders from. Auth (`api/http.ts`) has depended on this since before the titles round, so the breakage would surface there first.
 
 ---
 
