@@ -12,6 +12,7 @@ interface ChatState {
   sources: Source[]
   status: ChatStatus
   error: string | null
+  titleAnimatingId: string | null
 
   startStream: (message: string, streamConversationId: string | null) => void
   finishStream: () => void
@@ -21,6 +22,7 @@ interface ChatState {
   setStreamConversationId: (id: string) => void
   setSources: (sources: Source[]) => void
   appendToken: (token: string) => void
+  setTitleAnimatingId: (id: string | null) => void
 }
 
 export const useChatStore = create<ChatState>((set) => ({
@@ -30,17 +32,19 @@ export const useChatStore = create<ChatState>((set) => ({
   sources: [],
   status: 'idle',
   error: null,
+  titleAnimatingId: null,
 
   startStream: (message, streamConversationId) => set({
     status: 'streaming', pendingUserMessage: message, streamConversationId, streamingText: '', sources: [], error: null
   }),
   finishStream: () => set({status: 'idle'}),
   failStream: (message: string) => set({status: 'error', error: message}),
-  clearStream: () => set({streamConversationId: null, streamingText: '', sources: [], pendingUserMessage: null, error: null}),
+  clearStream: () => set({streamConversationId: null, streamingText: '', sources: [], pendingUserMessage: null, error: null, titleAnimatingId: null}),
   clearPendingUserMessage: () => set({pendingUserMessage: null}),
 
   setStreamConversationId: (id) => set({streamConversationId: id}),
   setSources: (sources) => set({sources}),
   
   appendToken: (token) => set((state) => ({streamingText: state.streamingText + token})),
+  setTitleAnimatingId: (id) => set({titleAnimatingId: id})
 }))
