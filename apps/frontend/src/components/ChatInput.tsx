@@ -38,6 +38,7 @@ export function ChatInput() {
         queryKey: queryKeys.messages(id), 
         queryFn: () => fetchMessages(id)
       })
+      queryClient.invalidateQueries({ queryKey: queryKeys.conversations })
       navigate(`/c/${id}`)
       useChatStore.getState().clearPendingUserMessage()
     }

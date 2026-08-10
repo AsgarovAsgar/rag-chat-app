@@ -1,9 +1,12 @@
+import type { Conversation } from '@/api/conversations'
+import { queryKeys } from '@/api/queryKeys'
+import { queryClient } from '@/lib/queryClient'
 import { useChatStore } from "@/store/chatStore";
 
 import { apiFetch } from './http'
 import type { Source } from "./messages";
 
-const { startStream, finishStream, failStream, setStreamConversationId, setSources, appendToken } = useChatStore.getState()
+const { startStream, finishStream, failStream, setStreamConversationId, setSources, appendToken, setTitleAnimatingId } = useChatStore.getState()
 
 let controller: AbortController | null = null
 
@@ -13,6 +16,15 @@ function handleEvent(event: string, data: string): string | null {
       const parsed = JSON.parse(data) as { conversationId: string }
       setStreamConversationId(parsed.conversationId)
       return parsed.conversationId
+    }
+
+    case 'title': {
+      const parsed = JSON.parse(data) as { conversationId: string; title: string }
+      queryClient.setQueryData<Conversation[]>(queryKeys.conversations, old =>
+        old?.map(c => c.id === parsed.conversationId ? { ...c, title: parsed.title } : c)
+      )
+      setTitleAnimatingId(parsed.conversationId)
+      break
     }
 
     case 'sources': {

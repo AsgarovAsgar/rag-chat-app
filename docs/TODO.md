@@ -9,17 +9,19 @@ Backlog for the RAG chat app.
 | # | Task | Importance | Time |
 |---|---|---|---|
 | 1.1 | NUL-byte strip in ingestion | ✅ done | — |
-| 2.1 | Spend protection | 🔴 blocking a public post | 15m–3h |
-| 2.2 | Demo corpus check | 🟠 | 30m |
-| 3.1 | Conversations CRUD | 🟠 | 3–5h |
+| 2.1 | Spend protection | ⏸ deferred — re-open before a public post | ~1h |
+| 2.2 | Demo corpus check | ✅ done | — |
+| 3.1 | Conversations CRUD | ✅ done | — |
 | 3.2 | Documents page UX | 🟡 mixed, see per-item | 15m–4h each |
-| 3.3 | Auto-generated titles | 🟡 | 1–2h |
+| 3.3 | Auto-generated titles | ✅ done | — |
 | 4.1 | Query rewriting | ✅ done | — |
 | 5.1 | Query routing | ⚪ optional | 3–5h |
 | 5.2 | MCP server | ⚪ optional | 1–2 days |
 | 6 | Old open items | ⚪ mostly | 10m–3h each |
 
-Rough total for what remains through §4, excluding the optional §5: **1.5–2.5 focused days.**
+Rough total for what remains through §4, excluding the optional §5 and the deferred §2.1: **~half a focused day**, now entirely §3.2 cherry-picks plus the §6 leftovers. Was 1.5–2.5 days before §3.1, the prod seed, the demo verification, and §3.3 all landed on 2026-08-10.
+
+**§2 is parked, not finished** — re-open §2.1 before any public post.
 
 ---
 
@@ -50,24 +52,29 @@ Built as designed below: module-level `stripNullBytes`, private `readFormat()`, 
 ## 2. Before sharing the demo publicly
 
 ### 2.1 Spend protection
-**🔴 Blocking for a public post · 15 min to 3 h depending on depth**
+**⏸ DEFERRED 2026-08-10 · ~1 h of real work left · re-open before posting publicly**
 
-**Why:** public demo account + open registration + uploads and chat hitting a personal OpenAI key. A modestly successful post can run a real bill overnight.
+The hard OpenAI cap and the throttler are built and live; what remains is the per-user upload cap plus two follow-ups. Deferred deliberately, not dropped: the risk only materializes on a public post, so this is safe to carry while the app stays unadvertised. **Nothing here is demo-only** — see the sub-bullets; the upload cap protects against ordinary registered users.
+
+**Why it matters when it does:** public demo account + open registration + uploads and chat hitting a personal OpenAI key. A modestly successful post can run a real bill overnight.
 
 Note: `@nestjs/throttler` was previously considered and declined ("i feel like we dont need it now"). **That decision was reversed 2026-08-03 and throttling is now built** — see the third bullet below. The original reasoning still explains the delay: it was declined for normal operation, and what changed is going public, which changes the traffic assumption.
 
 - [x] **🔴 ~15 min** — OpenAI dashboard hard spend limit. **DONE 2026-08-03: project spend limit $10.00/month, enforcing ("requests will start to fail when limit is reached"), at $0.02 when set.** Two follow-ups if not already handled: confirm the backend's `OPENAI_API_KEY` belongs to *this* project (a key from another project or a legacy org-level key isn't covered by a project cap), and set a notification threshold below $10 so you hear about it before the demo breaks.
-- [ ] **🟠 ~1 h** — Per-user upload cap / total document count cap. Cheapest code-level lever; uploads are the expensive path (embeddings on every chunk).
+- [ ] **🟠 ~1 h — DEFERRED 2026-08-10, do before posting publicly.** Per-user upload cap / total document count cap. Cheapest code-level lever; uploads are the expensive path (embeddings on every chunk).
+  - **Not a demo-user item** — this was briefly assumed to be one and checked. `POST /auth/register` is `@Public()` with no invite gate (`auth.controller.ts:37`), and the upload throttle (`documents.controller.ts:31`) applies to every authenticated user with no `is_demo` check. So the exposed path is an ordinary registered stranger uploading against a personal OpenAI key.
+  - **What the throttle does and doesn't cover:** 10 uploads/hour caps the *rate*, not the *total* — sustained, that's ~240 documents/day, and nothing bounds cumulative uploads per user. The $10/month OpenAI project cap is the only hard backstop, and hitting it breaks the demo for everyone rather than stopping one abuser.
+  - **Open design question when picked up:** document *count* is simpler (one `COUNT` before insert); total *bytes* tracks cost better, since embedding spend scales with content rather than file count. Either way, decide whether a demo sandbox's 4 cloned seed docs count against the visitor's allowance.
 - [x] **🟡 ~2–3 h** — Throttle on chat + upload + demo endpoints. **BUILT 2026-08-03** (uncommitted at time of writing). `@nestjs/throttler@6.5.0` properly installed this time — recorded in both `apps/backend/package.json` and `pnpm-lock.yaml`, unlike the earlier orphan. Shape: global permissive default `ThrottlerModule.forRoot({ throttlers: [{ name: 'default', ttl: 60_000, limit: 100 }] })` + `APP_GUARD` in `app.module.ts`, with per-route `@Throttle` overrides — `/auth/demo` 3/hour, `/chat` 10/min, `/documents` upload 10/hour. `documents/:id/retry` left on the global default (owner-scoped, already gated).
   - **`ttl` is MILLISECONDS in v6+.** Old docs show bare seconds; `ttl: 60` would mean 60ms and silently throttle nothing.
   - **Guard order matters and is correct as built:** `AppModule`'s own providers resolve before imported modules', so `ThrottlerGuard` runs before `AuthModule`'s `JwtAuthGuard` (`auth.module.ts:27`) — a flood is rejected before it costs a JWT verification.
   - **`app.set('trust proxy', 1)` in `main.ts` is load-bearing.** Behind Railway's proxy every request appears to come from the proxy IP, so without it all users share one bucket and the limits throttle the whole userbase collectively — worse than no throttle. Requires `NestFactory.create<NestExpressApplication>(AppModule)`.
-  - [ ] **Verify the proxy actually works** — hit a throttled route from two networks (cellular vs wifi) and confirm they don't share a counter. Not yet done.
-  - [ ] **🟡 ~30 min** — Frontend 429 handling. `apiFetch` treats non-2xx generically; a 429 on the demo button should say "try again in a minute", not a generic auth error.
+  - [ ] **~15 min — deferred with the rest of 2.1, but not a demo-only item.** Verify the proxy actually works: hit a throttled route from two networks (cellular vs wifi) and confirm they don't share a counter. If `trust proxy` is wrong, every user shares one bucket and real users get throttled collectively — worse than no throttle, per the bullet above.
+  - [ ] **🟡 ~30 min — deferred 2026-08-10, genuinely demo-facing.** Frontend 429 handling. `apiFetch` treats non-2xx generically; a 429 on the demo button should say "try again in a minute", not a generic auth error. The route most likely to throttle is `/auth/demo` at 3/hour, so this is polish on the demo path.
   - **Not covered:** WebSockets (`ThrottlerGuard` is HTTP-only, `EventsModule` gateway is untouched). Storage is in-memory — per-process, resets on deploy, fine for one Railway instance; a second instance would need the Redis adapter (Redis is already wired for BullMQ).
 
 ### 2.2 Demo corpus check
-**🔴 Critical · ~45 min**
+**✅ DONE 2026-08-10** — seed provisioned in prod, 4 docs confirmed `ready`, live demo verified end to end. Only the optional README screenshot remains.
 
 Rewritten 2026-08-03 for the per-visitor sandbox model (PR #37). The old shared-account framing is gone: visitors no longer share one login, so "anyone can delete the seed docs" is no longer the risk. `POST /auth/demo` clones the seed corpus into a fresh throwaway tenant per visitor, and a partial unique index (`users_demo_seed_idx`) allows at most one seed row.
 
@@ -75,21 +82,23 @@ The seed account **is** an ordinary loginable account — the `AND NOT is_demo_s
 
 The risk inverted: instead of visitors damaging a shared corpus, the failure is **the seed not existing in prod at all**.
 
-- [ ] **🔴 ~15 min** — **Provision the seed tenant in prod.** This is the outstanding item from the cloning round. `demo.service.ts:85` treats a missing seed as a *warning*, not an error — no seed means every visitor gets a silently empty sandbox and a demo that answers nothing. It fails soft, so it will not show up as an error anywhere; you have to look. Verify with `SELECT id FROM users WHERE is_demo_seed`.
-- [ ] **🟠 ~15 min** — Confirm the 4 seed docs are attached to that row and `status = 'ready'` — the clone's `WHERE status = 'ready'` filter means a stuck or failed seed doc is skipped silently and the sandbox comes up short.
-- [ ] **🟡 ~15 min** — Click through https://chat.comospace.dev via the demo button and confirm a fresh sandbox actually returns answers end to end. Re-verify the README's "questions worth trying" against a sandbox, not against your own account.
+- [x] **🔴 ~15 min** — **Provision the seed tenant in prod. DONE 2026-08-10.** `auth/demo.service.ts:85` treats a missing seed as a *warning*, not an error — no seed means every visitor gets a silently empty sandbox and a demo that answers nothing. It fails soft, so it will not show up as an error anywhere; you have to look. Verify with `SELECT id FROM users WHERE is_demo_seed`.
+- [x] **🟠 ~15 min** — **Seed docs confirmed `ready` 2026-08-10.** The clone's `WHERE status = 'ready'` filter means a stuck or failed seed doc is skipped silently and the sandbox comes up short.
+- [x] **🟡 ~15 min** — **Live demo verified end to end 2026-08-10** — demo button → fresh sandbox → answers returned, against https://chat.comospace.dev.
 - [ ] **⚪ ~30 min extra** — Screenshot for `README.md:9` — still an open TODO, and it's what a reviewer sees before clicking anything
 
-**Consider promoting to a real error:** if a missing seed should fail loudly instead of handing out empty sandboxes, that's a one-line change at `demo.service.ts:87`. Worth deciding once prod is seeded.
+**Still open — 🟡 ~15 min: promote the missing-seed warning to a real error.** Now decidable, since prod is seeded (this was parked on exactly that). At `auth/demo.service.ts:88` a missing seed logs a warning and hands the visitor an empty sandbox; throwing instead would surface it as a failed demo request rather than a demo that silently answers nothing. The argument for throwing: the seed existing is a deploy-time invariant, and the failure is otherwise invisible — the same trap that made the prod-seed item 🔴. The argument against: a visitor gets a hard error instead of a degraded-but-usable app. Note the `catch` at `:93` already rolls back and rethrows, so a throw here needs no other change.
 
 ---
 
 ## 3. Product gaps
 
 ### 3.1 Conversations CRUD (delete + rename)
-**🟠 High · ~3–5 h total** (backend ~1 h, frontend ~2–3 h, verification ~1 h)
+**✅ DONE 2026-08-10 — shipped in PR #42 (`e31a9bc`), branch `feat/conversations-crud`, 12 commits.**
 
-The frontend is the bulk of it — the backend is two endpoints copied from an existing pattern.
+Built as designed below, plus four polish commits not in the original plan: stronger sidebar hover/active states, full title on hover, immediate title update after rename, and hiding the conversations list when the sidebar is collapsed. Design notes kept for the reasoning.
+
+The frontend was the bulk of it — the backend was two endpoints copied from an existing pattern.
 
 **Why:** documents have full CRUD (delete, retry, status badges) but conversations have none. `ConversationsController` is `GET` list + `GET :id/messages` and nothing else. The sidebar accumulates junk permanently — including test conversations from earlier sessions. Most visible product hole in the app, and it unblocks the DB cleanup item in §6.
 
@@ -101,19 +110,21 @@ The frontend is the bulk of it — the backend is two endpoints copied from an e
 - Scoping precedent to copy: `documents.service.ts` uses `DELETE ... WHERE id = $1 AND user_id = $2 RETURNING`, 0 rows → `NotFoundException`.
 
 **Backend** (`conversations.controller.ts` + `chat.service.ts`) — **~1 h**:
-- [ ] **🟠 ~30 min** — `DELETE /conversations/:id` — `@HttpCode(204)`, `@Param('id', ParseUUIDPipe)`, single scoped `DELETE ... WHERE id = $1 AND user_id = $2 RETURNING id`, 0 rows → 404. **404 not 403** on another tenant's row (403 is an id-enumeration oracle).
-- [ ] **🟡 ~30 min** — `PATCH /conversations/:id` — `UpdateConversationDto` with `@IsString()` + length bounds; scoped `UPDATE ... WHERE id = $1 AND user_id = $2 RETURNING`. DTO param must stay a **value import** or `ValidationPipe` silently skips validation.
-- [ ] **~0** — Both are covered by the global `APP_GUARD` — no `@Public()`, no per-controller `@UseGuards` needed.
+- [x] **🟠 ~30 min** — `DELETE /conversations/:id` — `@HttpCode(204)`, `@Param('id', ParseUUIDPipe)`, single scoped `DELETE ... WHERE id = $1 AND user_id = $2 RETURNING id`, 0 rows → 404. **404 not 403** on another tenant's row (403 is an id-enumeration oracle).
+- [x] **🟡 ~30 min** — `PATCH /conversations/:id` — `UpdateConversationDto` with `@IsString()` + length bounds; scoped `UPDATE ... WHERE id = $1 AND user_id = $2 RETURNING`. DTO param must stay a **value import** or `ValidationPipe` silently skips validation.
+- [x] **~0** — Both are covered by the global `APP_GUARD` — no `@Public()`, no per-controller `@UseGuards` needed.
 
 **Frontend** — **~2–3 h**:
-- [ ] **🟠 ~30 min** — `api/conversations.ts` — `deleteConversation`, `renameConversation`, both via `apiFetch`. Delete returns 204, so don't call `res.json()`.
-- [ ] **🟠 ~1 h** — `AppSidebar.tsx:62-68` — add the action dropdown to the conversation row.
-- [ ] **~15 min** — Mutations invalidate `queryKeys.conversations`.
-- [ ] **🔴 ~30 min** — **Deleting the active conversation must navigate away** (`useMatch('/c/:conversationId')` already gives `activeId`) — otherwise `ConversationPage` sits on a 404'd id. Skipping this ships a visible bug.
-- [ ] **🟡 ~30 min** — **Deleting mid-stream:** check what happens if the deleted conversation is the one currently streaming (`streamConversationId` in the store). Simplest correct answer is to disable the delete action while that row is streaming.
-- [ ] **🟡 ~1 h** — Rename UX: inline edit in the row, or a small dialog. Delete confirm — reuse whatever §3.2 settles on rather than a second `window.confirm`.
+- [x] **🟠 ~30 min** — `api/conversations.ts` — `deleteConversation`, `renameConversation`, both via `apiFetch`. Delete returns 204, so don't call `res.json()`.
+- [x] **🟠 ~1 h** — `AppSidebar.tsx:62-68` — add the action dropdown to the conversation row.
+- [x] **~15 min** — Mutations invalidate `queryKeys.conversations`.
+- [x] **🔴 ~30 min** — **Deleting the active conversation must navigate away** (`useMatch('/c/:conversationId')` already gives `activeId`) — otherwise `ConversationPage` sits on a 404'd id. Skipping this ships a visible bug.
+- [x] **🟡 ~30 min** — **Deleting mid-stream:** check what happens if the deleted conversation is the one currently streaming (`streamConversationId` in the store). Simplest correct answer is to disable the delete action while that row is streaming.
+- [x] **🟡 ~1 h** — Rename UX: inline edit in the row, or a small dialog. Delete confirm — reuse whatever §3.2 settles on rather than a second `window.confirm`.
 
-**Related bug found while reading — 🟡 ~15 min:** `ConversationRow` in `chat.service.ts:11` types `title` as `string`, but `Conversation` in `api/conversations.ts:6` types it `string | null` and the sidebar renders `c.title ?? 'Untitled'`. One of the two is lying — check whether the INSERT at `chat.service.ts:88` can write NULL, and make the backend type honest. Do this before the rename work, which touches `title` directly.
+**Related bug found while reading — ✅ RESOLVED 2026-08-10.** `ConversationRow` typed `title` as `string` while the frontend typed it `string | null`. Verified the backend type was the honest one: `title` is `NOT NULL` (`migrations/1784031048268_add-conversations.sql:4`) and the INSERT always writes `dto.message.slice(0, 60)`, so NULL is unreachable. The frontend type is now `string`. The sidebar's `?? 'Untitled'` fallback is dead but harmless — leave it unless §3.3 changes how titles are written.
+
+Separately, `9d3f7f1` fixed a *different* type lie found in the same file: `ConversationRow` and `MessageRow` declared `created_at` while the queries alias `created_at AS "createdAt"`.
 
 ### 3.2 Documents page UX
 **Where:** `apps/frontend/src/pages/DocumentsPage.tsx`, `apps/frontend/src/components/DocumentUpload.tsx`
@@ -127,15 +138,28 @@ The page works — table, status badges, delete, retry, live WS status updates. 
 - [ ] **🟡 ~1 h** — **Single file only.** `e.target.files?.[0]` takes the first file and silently drops the rest, and the input has no `multiple`. Either allow multiple (needs per-file mutation state) or make the constraint visible (~10 min).
 - [ ] **🟡 ~30 min** — **`pending` and `processing` look identical** — both `secondary` (`DocumentsPage.tsx:21-22`). A spinner on `processing` would make the pipeline feel alive, which is the interesting part of this app. Good value for the time.
 - [ ] **🟡 ~45 min** — **No client-side file validation.** `accept` filters the picker but nothing checks type or size before the request, so an oversized file uploads fully and then fails server-side. Backend limit is 50 MB.
-- [ ] **⚪ ~45 min** — **`window.confirm` for delete** (`DocumentsPage.tsx:109`). Works, but it's the one place the UI drops out of the design system. Shared with §3.1's delete confirm — build once.
+- [ ] **⚪ ~15 min** — **`window.confirm` for delete** (`DocumentsPage.tsx:109`). Works, but it's the one place the UI drops out of the design system. **Now cheap:** §3.1 already added the alert dialog primitive (`78dad73`) and wired it for conversation delete — this is reusing that pattern, not building it. Was ~45 min.
 - [ ] **🟡 ~1–2 h** — **Table isn't responsive.** `table-fixed` with five columns and a `truncate` on filename — check on mobile first (~10 min); the fix is a card layout or fewer columns at narrow widths. Time is uncertain because I haven't verified it's actually broken.
 - [ ] **⚪ ~1 h** — **No chunk count.** Was deliberately not selected in the CRUD round. Reconsider: it's the one column that shows retrieval actually happened, and it makes a zero-chunk document self-evident. Needs a `COUNT` join in `documents.service.ts`.
 - [ ] **⚪ ~10 min** — **Cosmetic:** stray indentation at `DocumentsPage.tsx:52`; `Uploaded` shows date only, no time.
 
 ### 3.3 Auto-generated conversation titles
-**🟡 Medium · ~1–2 h**
+**✅ DONE 2026-08-10** — branch `feat/auto-titles`.
 
-**Why:** related to the above — check what `title` currently holds. If it's the raw first message, a short LLM-generated title is a small, visible polish win and pairs naturally with rename. Cheap because the OpenAI client is already wired in `chat.service.ts`; the design question is whether to generate inline (adds latency) or fire-and-forget after the first exchange.
+`generateTitle()` in `chat.service.ts` produces a 2–4 word title from the user's **first message only** (not the answer), and the sidebar types it in character by character.
+
+**Shape as built:**
+- **Concurrent, not sequential.** The call starts right after the `conversation` SSE event and runs alongside retrieval and answer generation, so its ~400 ms lands in dead time and adds nothing to perceived latency. Titling from the message alone is what makes this possible — including the answer would force the call to wait for the last token.
+- **Delivered on its own `title` SSE event**, not as a field on `done`, so the sidebar updates *mid-stream* rather than when the answer finishes.
+- **`ensureConversation` returns `{ id, isNew }`.** The `isNew` guard is what stops auto-titling from ever overwriting a manual rename — titles are generated once, on creation, and never again.
+- **Fails soft to the `slice(0, 60)` fallback** — `generateTitle` catches everything and resolves `null`, so it never rejects. That is load-bearing: it is started as a floating promise, and a rejection between creation and `await` would be an unhandled rejection. `await titleTask` before every `res.end()` (all three paths) covers both ordering and error surfacing.
+- **Frontend uses `setQueryData`, not `invalidateQueries`** — the event payload already carries `conversationId` and `title`, so no refetch is needed and one row re-renders.
+
+**Two traps worth remembering:**
+- **`AbortSignal.timeout()` does not produce a `TimeoutError` through the OpenAI SDK** — it surfaces as `APIUserAbortError`, so `err.name === 'TimeoutError'` never matches and a timeout logs a full stack trace instead of one warning line. Hoist the signal and check `signal.aborted` in the catch. This bug was present in `rewriteQuery` from the §4.1 round and went unnoticed until the title path hit it; both are fixed now.
+- **Prompt-only length limits get routed around.** Banning "Conversation about" just moved the model to "Understanding X in the context of Y". Concrete input→output examples in the prompt pinned the shape far better than negative rules; `max_tokens: 12` is the hard backstop, plus a code-level trim of quotes/trailing period.
+
+**Recommendation — query client access (noted while reviewing, no action needed):** `lib/queryClient.ts` exports a singleton that `main.tsx` passes to `QueryClientProvider`. Components should keep using `useQueryClient()` (follows the provider, works under a test-local client, decoupled from the module path); only non-React modules — `api/chat.ts` and `api/http.ts`, which have no React context — should import the singleton directly. Rule of thumb: **hook where hooks are legal, import where they aren't.** The one constraint to preserve is that `main.tsx` must pass *that* instance to the provider — replacing it with an inline `new QueryClient()` would silently split the cache, and the non-React writes would land somewhere nothing renders from. Auth (`api/http.ts`) has depended on this since before the titles round, so the breakage would surface there first.
 
 ---
 
@@ -181,6 +205,6 @@ Expose `search` and `fetch` tools so Claude Desktop / Claude Code can query the 
 - [ ] **🟡 ~2–3 h** — Frontend review item 2, residual autoscroll yank. `StreamingMessage`'s sentinel `scrollIntoView`s every token, so scrolling up mid-stream yanks you back down. `BottomScrollButton` gives a way *down*, not a way to *stay up*. Coupling note: the button's `atBottom` stays fresh during streams only because the sentinel yanks fire scroll events — any near-bottom guard on the sentinel must add a `ResizeObserver` content-growth recheck to the button. Estimate is wide because a previous attempt at this was abandoned undiagnosed.
 - [ ] **⚪ ~10 min** — Frontend review item 4: `nav-main.tsx` is dead. (`nav-projects.tsx` is deliberately kept, see 3.1 — delete `nav-main` only.)
 - [ ] **⚪ ~15 min** — Frontend review item 10: `aria-expanded` on `SourceChips`.
-- [ ] **⚪ ~15 min** — DB cleanup: junk test conversations from earlier sessions. Blocked on 3.1 (no delete UI exists). Trivial once the UI ships.
+- [ ] **⚪ ~15 min** — DB cleanup: junk test conversations from earlier sessions. **Unblocked 2026-08-10** — 3.1 shipped, so this is now click-through work in the sidebar, no SQL needed.
 - [ ] **⚪ ~15 min** — Cosmetic, previously skipped: `new QueryClient` missing parens in `lib/queryClient.ts`; `apiFetch` param named `input` while typed `string`; repeated `fetch(input, init)` instead of a hoisted thunk.
 - [ ] **🟡 ~15 min** — Tag + GitHub Release for the auth deploy (`v0.2.0`) if not already done.

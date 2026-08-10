@@ -17,6 +17,11 @@ type MessageRow = {
   createdAt: string;
 };
 
+/** A title is 3-6 words; this caps runaway output, not a target. */
+const TITLE_MAX_TOKENS = 20;
+const TITLE_MODEL = 'gpt-4o-mini';
+const TITLE_TIMEOUT_MS = 3000;
+
 const CHAT_MODEL = 'gpt-4o-mini';
 const HISTORY_LIMIT = 10;
 const TOP_K = 5;
@@ -107,7 +112,7 @@ export class ChatService {
   private async ensureConversation(
     dto: ChatDto,
     userId: string,
-  ): Promise<string> {
+  ): Promise<{ id: string; isNew: boolean }> {
     if (dto.conversationId) {
       const { rows } = await this.pool.query(
         'SELECT id FROM conversations WHERE id = $1 AND user_id = $2',
@@ -116,14 +121,14 @@ export class ChatService {
       if (rows.length === 0) {
         throw new NotFoundException('Conversation not found');
       }
-      return dto.conversationId;
+      return { id: dto.conversationId, isNew: false };
     }
 
     const { rows } = await this.pool.query<{ id: string }>(
       'INSERT INTO conversations (user_id, title) VALUES ($1, $2) RETURNING id',
       [userId, dto.message.slice(0, 60)],
     );
-    return rows[0].id;
+    return { id: rows[0].id, isNew: true };
   }
 
   private async loadHistory(conversationId: string): Promise<HistoryMessage[]> {
@@ -145,6 +150,8 @@ export class ChatService {
     history: HistoryMessage[],
   ): Promise<string> {
     if (history.length === 0) return message;
+
+    const signal = AbortSignal.timeout(REWRITE_TIMEOUT_MS);
 
     const transcript = history
       .slice(-REWRITE_HISTORY_TURNS)
@@ -172,7 +179,7 @@ ${transcript}`,
             { role: 'user', content: message },
           ],
         },
-        { signal: AbortSignal.timeout(REWRITE_TIMEOUT_MS) },
+        { signal },
       );
 
       const rewritten = completion.choices[0]?.message?.content?.trim();
@@ -181,7 +188,7 @@ ${transcript}`,
       this.logger.log(`Rewrote query: "${message}" → "${rewritten}"`);
       return rewritten;
     } catch (err) {
-      if (err instanceof Error && err.name === 'TimeoutError') {
+      if (signal.aborted) {
         this.logger.warn(
           `Query rewrite timed out after ${REWRITE_TIMEOUT_MS}ms`,
         );
@@ -189,6 +196,55 @@ ${transcript}`,
         this.logger.warn('Query rewrite failed, using original message', err);
       }
       return message;
+    }
+  }
+
+  private async generateTitle(message: string): Promise<string | null> {
+    const signal = AbortSignal.timeout(TITLE_TIMEOUT_MS);
+    try {
+      const completion = await this.client.chat.completions.create(
+        {
+          model: TITLE_MODEL,
+          temperature: 0,
+          max_tokens: TITLE_MAX_TOKENS,
+          messages: [
+            {
+              role: 'system',
+              content: `Generate a title for a conversation that starts with the user's message.
+
+Rules:
+- 2 to 4 words. Never more than 5.
+- Name the topic directly. Do not describe the message.
+- No leading verbs like "Understanding", "Exploring", "Discussing", "Learning".
+- No filler like "in the context of", "an overview of", "a guide to".
+- No quotes, no trailing period.
+- Match the language of the user's message.
+
+Examples:
+"How does HNSW indexing compare to IVFFlat for cosine similarity?" -> HNSW vs IVFFlat
+"What did the RAG paper say about retrieval?" -> RAG paper retrieval
+"Can you explain how the chunking strategy works in this codebase?" -> Chunking strategy
+"hey" -> New conversation`,
+            },
+            { role: 'user', content: message },
+          ],
+        },
+        { signal },
+      );
+
+      return completion.choices[0]?.message?.content?.trim() || null;
+    } catch (err) {
+      if (signal.aborted) {
+        this.logger.warn(
+          `Title generation timed out after ${TITLE_TIMEOUT_MS}ms`,
+        );
+      } else {
+        this.logger.warn(
+          'Title generation failed, keeping the truncated title',
+          err,
+        );
+      }
+      return null;
     }
   }
 
@@ -217,7 +273,10 @@ ${transcript}`,
   }
 
   async chat(dto: ChatDto, userId: string, res: Response): Promise<void> {
-    const conversationId = await this.ensureConversation(dto, userId);
+    const { id: conversationId, isNew } = await this.ensureConversation(
+      dto,
+      userId,
+    );
     const history = await this.loadHistory(conversationId);
 
     await this.pool.query(
@@ -233,6 +292,19 @@ ${transcript}`,
 
     this.send(res, 'conversation', { conversationId });
 
+    let titleTask: Promise<void> | null = null;
+
+    if (isNew) {
+      titleTask = this.generateTitle(dto.message).then(async (title) => {
+        if (!title) return;
+        await this.pool.query(
+          'UPDATE conversations SET title = $2 WHERE id = $1',
+          [conversationId, title],
+        );
+        this.send(res, 'title', { conversationId, title });
+      });
+    }
+
     let sources: SearchResult[];
 
     try {
@@ -241,6 +313,7 @@ ${transcript}`,
     } catch (err) {
       this.logger.error('Retrieval failed', err);
       this.send(res, 'error', { message: 'Retrieval failed' });
+      if (titleTask) await titleTask;
       res.end();
       return;
     }
@@ -276,6 +349,7 @@ ${transcript}`,
       if (!abort.signal.aborted) {
         this.logger.error('Chat generation failed', err);
         this.send(res, 'error', { message: 'Generation failed' });
+        if (titleTask) await titleTask;
         res.end();
         return;
       }
@@ -289,6 +363,8 @@ ${transcript}`,
         [conversationId, answer, JSON.stringify(sources)],
       );
     }
+
+    if (titleTask) await titleTask;
 
     this.send(res, 'done', { conversationId });
     res.end();
