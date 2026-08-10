@@ -9,8 +9,8 @@ Backlog for the RAG chat app.
 | # | Task | Importance | Time |
 |---|---|---|---|
 | 1.1 | NUL-byte strip in ingestion | ✅ done | — |
-| 2.1 | Spend protection | 🔴 blocking a public post | 15m–3h |
-| 2.2 | Demo corpus check | 🟠 | 30m |
+| 2.1 | Spend protection | 🔴 last item blocking a public post | ~1h + 45m follow-ups |
+| 2.2 | Demo corpus check | ✅ done | — |
 | 3.1 | Conversations CRUD | ✅ done | — |
 | 3.2 | Documents page UX | 🟡 mixed, see per-item | 15m–4h each |
 | 3.3 | Auto-generated titles | 🟡 | 1–2h |
@@ -67,7 +67,7 @@ Note: `@nestjs/throttler` was previously considered and declined ("i feel like w
   - **Not covered:** WebSockets (`ThrottlerGuard` is HTTP-only, `EventsModule` gateway is untouched). Storage is in-memory — per-process, resets on deploy, fine for one Railway instance; a second instance would need the Redis adapter (Redis is already wired for BullMQ).
 
 ### 2.2 Demo corpus check
-**🟠 High · ~30 min remaining** — the 🔴 blocking item (prod seed) is done; what's left is verifying the seed is complete and healthy.
+**✅ DONE 2026-08-10** — seed provisioned in prod, 4 docs confirmed `ready`, live demo verified end to end. Only the optional README screenshot remains.
 
 Rewritten 2026-08-03 for the per-visitor sandbox model (PR #37). The old shared-account framing is gone: visitors no longer share one login, so "anyone can delete the seed docs" is no longer the risk. `POST /auth/demo` clones the seed corpus into a fresh throwaway tenant per visitor, and a partial unique index (`users_demo_seed_idx`) allows at most one seed row.
 
@@ -76,11 +76,11 @@ The seed account **is** an ordinary loginable account — the `AND NOT is_demo_s
 The risk inverted: instead of visitors damaging a shared corpus, the failure is **the seed not existing in prod at all**.
 
 - [x] **🔴 ~15 min** — **Provision the seed tenant in prod. DONE 2026-08-10.** `auth/demo.service.ts:85` treats a missing seed as a *warning*, not an error — no seed means every visitor gets a silently empty sandbox and a demo that answers nothing. It fails soft, so it will not show up as an error anywhere; you have to look. Verify with `SELECT id FROM users WHERE is_demo_seed`.
-- [ ] **🟠 ~15 min** — Confirm the 4 seed docs are attached to that row and `status = 'ready'` — the clone's `WHERE status = 'ready'` filter means a stuck or failed seed doc is skipped silently and the sandbox comes up short.
-- [ ] **🟡 ~15 min** — Click through https://chat.comospace.dev via the demo button and confirm a fresh sandbox actually returns answers end to end. Re-verify the README's "questions worth trying" against a sandbox, not against your own account.
+- [x] **🟠 ~15 min** — **Seed docs confirmed `ready` 2026-08-10.** The clone's `WHERE status = 'ready'` filter means a stuck or failed seed doc is skipped silently and the sandbox comes up short.
+- [x] **🟡 ~15 min** — **Live demo verified end to end 2026-08-10** — demo button → fresh sandbox → answers returned, against https://chat.comospace.dev.
 - [ ] **⚪ ~30 min extra** — Screenshot for `README.md:9` — still an open TODO, and it's what a reviewer sees before clicking anything
 
-**Consider promoting to a real error:** if a missing seed should fail loudly instead of handing out empty sandboxes, that's a one-line change at `demo.service.ts:87`. Worth deciding once prod is seeded.
+**Still open — 🟡 ~15 min: promote the missing-seed warning to a real error.** Now decidable, since prod is seeded (this was parked on exactly that). At `auth/demo.service.ts:88` a missing seed logs a warning and hands the visitor an empty sandbox; throwing instead would surface it as a failed demo request rather than a demo that silently answers nothing. The argument for throwing: the seed existing is a deploy-time invariant, and the failure is otherwise invisible — the same trap that made the prod-seed item 🔴. The argument against: a visitor gets a hard error instead of a degraded-but-usable app. Note the `catch` at `:93` already rolls back and rethrows, so a throw here needs no other change.
 
 ---
 
