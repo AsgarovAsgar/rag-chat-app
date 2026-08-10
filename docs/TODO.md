@@ -9,7 +9,7 @@ Backlog for the RAG chat app.
 | # | Task | Importance | Time |
 |---|---|---|---|
 | 1.1 | NUL-byte strip in ingestion | ✅ done | — |
-| 2.1 | Spend protection | 🔴 last item blocking a public post | ~1h + 45m follow-ups |
+| 2.1 | Spend protection | ⏸ deferred — re-open before a public post | ~1h |
 | 2.2 | Demo corpus check | ✅ done | — |
 | 3.1 | Conversations CRUD | ✅ done | — |
 | 3.2 | Documents page UX | 🟡 mixed, see per-item | 15m–4h each |
@@ -19,7 +19,9 @@ Backlog for the RAG chat app.
 | 5.2 | MCP server | ⚪ optional | 1–2 days |
 | 6 | Old open items | ⚪ mostly | 10m–3h each |
 
-Rough total for what remains through §4, excluding the optional §5: **~1–1.5 focused days** (was 1.5–2.5 before §3.1 and the prod seed landed on 2026-08-10).
+Rough total for what remains through §4, excluding the optional §5 and the deferred §2.1: **~1 focused day**, now almost entirely §3.2 cherry-picks plus §3.3. Was 1.5–2.5 days before §3.1, the prod seed, and the demo verification landed on 2026-08-10.
+
+**§2 is parked, not finished** — re-open §2.1 before any public post.
 
 ---
 
@@ -50,20 +52,25 @@ Built as designed below: module-level `stripNullBytes`, private `readFormat()`, 
 ## 2. Before sharing the demo publicly
 
 ### 2.1 Spend protection
-**🔴 Blocking for a public post · 15 min to 3 h depending on depth**
+**⏸ DEFERRED 2026-08-10 · ~1 h of real work left · re-open before posting publicly**
 
-**Why:** public demo account + open registration + uploads and chat hitting a personal OpenAI key. A modestly successful post can run a real bill overnight.
+The hard OpenAI cap and the throttler are built and live; what remains is the per-user upload cap plus two follow-ups. Deferred deliberately, not dropped: the risk only materializes on a public post, so this is safe to carry while the app stays unadvertised. **Nothing here is demo-only** — see the sub-bullets; the upload cap protects against ordinary registered users.
+
+**Why it matters when it does:** public demo account + open registration + uploads and chat hitting a personal OpenAI key. A modestly successful post can run a real bill overnight.
 
 Note: `@nestjs/throttler` was previously considered and declined ("i feel like we dont need it now"). **That decision was reversed 2026-08-03 and throttling is now built** — see the third bullet below. The original reasoning still explains the delay: it was declined for normal operation, and what changed is going public, which changes the traffic assumption.
 
 - [x] **🔴 ~15 min** — OpenAI dashboard hard spend limit. **DONE 2026-08-03: project spend limit $10.00/month, enforcing ("requests will start to fail when limit is reached"), at $0.02 when set.** Two follow-ups if not already handled: confirm the backend's `OPENAI_API_KEY` belongs to *this* project (a key from another project or a legacy org-level key isn't covered by a project cap), and set a notification threshold below $10 so you hear about it before the demo breaks.
-- [ ] **🟠 ~1 h** — Per-user upload cap / total document count cap. Cheapest code-level lever; uploads are the expensive path (embeddings on every chunk).
+- [ ] **🟠 ~1 h — DEFERRED 2026-08-10, do before posting publicly.** Per-user upload cap / total document count cap. Cheapest code-level lever; uploads are the expensive path (embeddings on every chunk).
+  - **Not a demo-user item** — this was briefly assumed to be one and checked. `POST /auth/register` is `@Public()` with no invite gate (`auth.controller.ts:37`), and the upload throttle (`documents.controller.ts:31`) applies to every authenticated user with no `is_demo` check. So the exposed path is an ordinary registered stranger uploading against a personal OpenAI key.
+  - **What the throttle does and doesn't cover:** 10 uploads/hour caps the *rate*, not the *total* — sustained, that's ~240 documents/day, and nothing bounds cumulative uploads per user. The $10/month OpenAI project cap is the only hard backstop, and hitting it breaks the demo for everyone rather than stopping one abuser.
+  - **Open design question when picked up:** document *count* is simpler (one `COUNT` before insert); total *bytes* tracks cost better, since embedding spend scales with content rather than file count. Either way, decide whether a demo sandbox's 4 cloned seed docs count against the visitor's allowance.
 - [x] **🟡 ~2–3 h** — Throttle on chat + upload + demo endpoints. **BUILT 2026-08-03** (uncommitted at time of writing). `@nestjs/throttler@6.5.0` properly installed this time — recorded in both `apps/backend/package.json` and `pnpm-lock.yaml`, unlike the earlier orphan. Shape: global permissive default `ThrottlerModule.forRoot({ throttlers: [{ name: 'default', ttl: 60_000, limit: 100 }] })` + `APP_GUARD` in `app.module.ts`, with per-route `@Throttle` overrides — `/auth/demo` 3/hour, `/chat` 10/min, `/documents` upload 10/hour. `documents/:id/retry` left on the global default (owner-scoped, already gated).
   - **`ttl` is MILLISECONDS in v6+.** Old docs show bare seconds; `ttl: 60` would mean 60ms and silently throttle nothing.
   - **Guard order matters and is correct as built:** `AppModule`'s own providers resolve before imported modules', so `ThrottlerGuard` runs before `AuthModule`'s `JwtAuthGuard` (`auth.module.ts:27`) — a flood is rejected before it costs a JWT verification.
   - **`app.set('trust proxy', 1)` in `main.ts` is load-bearing.** Behind Railway's proxy every request appears to come from the proxy IP, so without it all users share one bucket and the limits throttle the whole userbase collectively — worse than no throttle. Requires `NestFactory.create<NestExpressApplication>(AppModule)`.
-  - [ ] **Verify the proxy actually works** — hit a throttled route from two networks (cellular vs wifi) and confirm they don't share a counter. Not yet done.
-  - [ ] **🟡 ~30 min** — Frontend 429 handling. `apiFetch` treats non-2xx generically; a 429 on the demo button should say "try again in a minute", not a generic auth error.
+  - [ ] **~15 min — deferred with the rest of 2.1, but not a demo-only item.** Verify the proxy actually works: hit a throttled route from two networks (cellular vs wifi) and confirm they don't share a counter. If `trust proxy` is wrong, every user shares one bucket and real users get throttled collectively — worse than no throttle, per the bullet above.
+  - [ ] **🟡 ~30 min — deferred 2026-08-10, genuinely demo-facing.** Frontend 429 handling. `apiFetch` treats non-2xx generically; a 429 on the demo button should say "try again in a minute", not a generic auth error. The route most likely to throttle is `/auth/demo` at 3/hour, so this is polish on the demo path.
   - **Not covered:** WebSockets (`ThrottlerGuard` is HTTP-only, `EventsModule` gateway is untouched). Storage is in-memory — per-process, resets on deploy, fine for one Railway instance; a second instance would need the Redis adapter (Redis is already wired for BullMQ).
 
 ### 2.2 Demo corpus check
