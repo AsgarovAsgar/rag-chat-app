@@ -11,7 +11,7 @@ Backlog for the RAG chat app.
 | 1.1 | NUL-byte strip in ingestion | ✅ done | — |
 | 2.1 | Spend protection | 🔴 blocking a public post | 15m–3h |
 | 2.2 | Demo corpus check | 🟠 | 30m |
-| 3.1 | Conversations CRUD | 🟠 | 3–5h |
+| 3.1 | Conversations CRUD | ✅ done | — |
 | 3.2 | Documents page UX | 🟡 mixed, see per-item | 15m–4h each |
 | 3.3 | Auto-generated titles | 🟡 | 1–2h |
 | 4.1 | Query rewriting | ✅ done | — |
@@ -19,7 +19,7 @@ Backlog for the RAG chat app.
 | 5.2 | MCP server | ⚪ optional | 1–2 days |
 | 6 | Old open items | ⚪ mostly | 10m–3h each |
 
-Rough total for what remains through §4, excluding the optional §5: **1.5–2.5 focused days.**
+Rough total for what remains through §4, excluding the optional §5: **~1–1.5 focused days** (was 1.5–2.5 before §3.1 and the prod seed landed on 2026-08-10).
 
 ---
 
@@ -67,7 +67,7 @@ Note: `@nestjs/throttler` was previously considered and declined ("i feel like w
   - **Not covered:** WebSockets (`ThrottlerGuard` is HTTP-only, `EventsModule` gateway is untouched). Storage is in-memory — per-process, resets on deploy, fine for one Railway instance; a second instance would need the Redis adapter (Redis is already wired for BullMQ).
 
 ### 2.2 Demo corpus check
-**🔴 Critical · ~45 min**
+**🟠 High · ~30 min remaining** — the 🔴 blocking item (prod seed) is done; what's left is verifying the seed is complete and healthy.
 
 Rewritten 2026-08-03 for the per-visitor sandbox model (PR #37). The old shared-account framing is gone: visitors no longer share one login, so "anyone can delete the seed docs" is no longer the risk. `POST /auth/demo` clones the seed corpus into a fresh throwaway tenant per visitor, and a partial unique index (`users_demo_seed_idx`) allows at most one seed row.
 
@@ -75,7 +75,7 @@ The seed account **is** an ordinary loginable account — the `AND NOT is_demo_s
 
 The risk inverted: instead of visitors damaging a shared corpus, the failure is **the seed not existing in prod at all**.
 
-- [ ] **🔴 ~15 min** — **Provision the seed tenant in prod.** This is the outstanding item from the cloning round. `demo.service.ts:85` treats a missing seed as a *warning*, not an error — no seed means every visitor gets a silently empty sandbox and a demo that answers nothing. It fails soft, so it will not show up as an error anywhere; you have to look. Verify with `SELECT id FROM users WHERE is_demo_seed`.
+- [x] **🔴 ~15 min** — **Provision the seed tenant in prod. DONE 2026-08-10.** `auth/demo.service.ts:85` treats a missing seed as a *warning*, not an error — no seed means every visitor gets a silently empty sandbox and a demo that answers nothing. It fails soft, so it will not show up as an error anywhere; you have to look. Verify with `SELECT id FROM users WHERE is_demo_seed`.
 - [ ] **🟠 ~15 min** — Confirm the 4 seed docs are attached to that row and `status = 'ready'` — the clone's `WHERE status = 'ready'` filter means a stuck or failed seed doc is skipped silently and the sandbox comes up short.
 - [ ] **🟡 ~15 min** — Click through https://chat.comospace.dev via the demo button and confirm a fresh sandbox actually returns answers end to end. Re-verify the README's "questions worth trying" against a sandbox, not against your own account.
 - [ ] **⚪ ~30 min extra** — Screenshot for `README.md:9` — still an open TODO, and it's what a reviewer sees before clicking anything
@@ -87,9 +87,11 @@ The risk inverted: instead of visitors damaging a shared corpus, the failure is 
 ## 3. Product gaps
 
 ### 3.1 Conversations CRUD (delete + rename)
-**🟠 High · ~3–5 h total** (backend ~1 h, frontend ~2–3 h, verification ~1 h)
+**✅ DONE 2026-08-10 — shipped in PR #42 (`e31a9bc`), branch `feat/conversations-crud`, 12 commits.**
 
-The frontend is the bulk of it — the backend is two endpoints copied from an existing pattern.
+Built as designed below, plus four polish commits not in the original plan: stronger sidebar hover/active states, full title on hover, immediate title update after rename, and hiding the conversations list when the sidebar is collapsed. Design notes kept for the reasoning.
+
+The frontend was the bulk of it — the backend was two endpoints copied from an existing pattern.
 
 **Why:** documents have full CRUD (delete, retry, status badges) but conversations have none. `ConversationsController` is `GET` list + `GET :id/messages` and nothing else. The sidebar accumulates junk permanently — including test conversations from earlier sessions. Most visible product hole in the app, and it unblocks the DB cleanup item in §6.
 
@@ -101,19 +103,21 @@ The frontend is the bulk of it — the backend is two endpoints copied from an e
 - Scoping precedent to copy: `documents.service.ts` uses `DELETE ... WHERE id = $1 AND user_id = $2 RETURNING`, 0 rows → `NotFoundException`.
 
 **Backend** (`conversations.controller.ts` + `chat.service.ts`) — **~1 h**:
-- [ ] **🟠 ~30 min** — `DELETE /conversations/:id` — `@HttpCode(204)`, `@Param('id', ParseUUIDPipe)`, single scoped `DELETE ... WHERE id = $1 AND user_id = $2 RETURNING id`, 0 rows → 404. **404 not 403** on another tenant's row (403 is an id-enumeration oracle).
-- [ ] **🟡 ~30 min** — `PATCH /conversations/:id` — `UpdateConversationDto` with `@IsString()` + length bounds; scoped `UPDATE ... WHERE id = $1 AND user_id = $2 RETURNING`. DTO param must stay a **value import** or `ValidationPipe` silently skips validation.
-- [ ] **~0** — Both are covered by the global `APP_GUARD` — no `@Public()`, no per-controller `@UseGuards` needed.
+- [x] **🟠 ~30 min** — `DELETE /conversations/:id` — `@HttpCode(204)`, `@Param('id', ParseUUIDPipe)`, single scoped `DELETE ... WHERE id = $1 AND user_id = $2 RETURNING id`, 0 rows → 404. **404 not 403** on another tenant's row (403 is an id-enumeration oracle).
+- [x] **🟡 ~30 min** — `PATCH /conversations/:id` — `UpdateConversationDto` with `@IsString()` + length bounds; scoped `UPDATE ... WHERE id = $1 AND user_id = $2 RETURNING`. DTO param must stay a **value import** or `ValidationPipe` silently skips validation.
+- [x] **~0** — Both are covered by the global `APP_GUARD` — no `@Public()`, no per-controller `@UseGuards` needed.
 
 **Frontend** — **~2–3 h**:
-- [ ] **🟠 ~30 min** — `api/conversations.ts` — `deleteConversation`, `renameConversation`, both via `apiFetch`. Delete returns 204, so don't call `res.json()`.
-- [ ] **🟠 ~1 h** — `AppSidebar.tsx:62-68` — add the action dropdown to the conversation row.
-- [ ] **~15 min** — Mutations invalidate `queryKeys.conversations`.
-- [ ] **🔴 ~30 min** — **Deleting the active conversation must navigate away** (`useMatch('/c/:conversationId')` already gives `activeId`) — otherwise `ConversationPage` sits on a 404'd id. Skipping this ships a visible bug.
-- [ ] **🟡 ~30 min** — **Deleting mid-stream:** check what happens if the deleted conversation is the one currently streaming (`streamConversationId` in the store). Simplest correct answer is to disable the delete action while that row is streaming.
-- [ ] **🟡 ~1 h** — Rename UX: inline edit in the row, or a small dialog. Delete confirm — reuse whatever §3.2 settles on rather than a second `window.confirm`.
+- [x] **🟠 ~30 min** — `api/conversations.ts` — `deleteConversation`, `renameConversation`, both via `apiFetch`. Delete returns 204, so don't call `res.json()`.
+- [x] **🟠 ~1 h** — `AppSidebar.tsx:62-68` — add the action dropdown to the conversation row.
+- [x] **~15 min** — Mutations invalidate `queryKeys.conversations`.
+- [x] **🔴 ~30 min** — **Deleting the active conversation must navigate away** (`useMatch('/c/:conversationId')` already gives `activeId`) — otherwise `ConversationPage` sits on a 404'd id. Skipping this ships a visible bug.
+- [x] **🟡 ~30 min** — **Deleting mid-stream:** check what happens if the deleted conversation is the one currently streaming (`streamConversationId` in the store). Simplest correct answer is to disable the delete action while that row is streaming.
+- [x] **🟡 ~1 h** — Rename UX: inline edit in the row, or a small dialog. Delete confirm — reuse whatever §3.2 settles on rather than a second `window.confirm`.
 
-**Related bug found while reading — 🟡 ~15 min:** `ConversationRow` in `chat.service.ts:11` types `title` as `string`, but `Conversation` in `api/conversations.ts:6` types it `string | null` and the sidebar renders `c.title ?? 'Untitled'`. One of the two is lying — check whether the INSERT at `chat.service.ts:88` can write NULL, and make the backend type honest. Do this before the rename work, which touches `title` directly.
+**Related bug found while reading — ✅ RESOLVED 2026-08-10.** `ConversationRow` typed `title` as `string` while the frontend typed it `string | null`. Verified the backend type was the honest one: `title` is `NOT NULL` (`migrations/1784031048268_add-conversations.sql:4`) and the INSERT always writes `dto.message.slice(0, 60)`, so NULL is unreachable. The frontend type is now `string`. The sidebar's `?? 'Untitled'` fallback is dead but harmless — leave it unless §3.3 changes how titles are written.
+
+Separately, `9d3f7f1` fixed a *different* type lie found in the same file: `ConversationRow` and `MessageRow` declared `created_at` while the queries alias `created_at AS "createdAt"`.
 
 ### 3.2 Documents page UX
 **Where:** `apps/frontend/src/pages/DocumentsPage.tsx`, `apps/frontend/src/components/DocumentUpload.tsx`
@@ -127,7 +131,7 @@ The page works — table, status badges, delete, retry, live WS status updates. 
 - [ ] **🟡 ~1 h** — **Single file only.** `e.target.files?.[0]` takes the first file and silently drops the rest, and the input has no `multiple`. Either allow multiple (needs per-file mutation state) or make the constraint visible (~10 min).
 - [ ] **🟡 ~30 min** — **`pending` and `processing` look identical** — both `secondary` (`DocumentsPage.tsx:21-22`). A spinner on `processing` would make the pipeline feel alive, which is the interesting part of this app. Good value for the time.
 - [ ] **🟡 ~45 min** — **No client-side file validation.** `accept` filters the picker but nothing checks type or size before the request, so an oversized file uploads fully and then fails server-side. Backend limit is 50 MB.
-- [ ] **⚪ ~45 min** — **`window.confirm` for delete** (`DocumentsPage.tsx:109`). Works, but it's the one place the UI drops out of the design system. Shared with §3.1's delete confirm — build once.
+- [ ] **⚪ ~15 min** — **`window.confirm` for delete** (`DocumentsPage.tsx:109`). Works, but it's the one place the UI drops out of the design system. **Now cheap:** §3.1 already added the alert dialog primitive (`78dad73`) and wired it for conversation delete — this is reusing that pattern, not building it. Was ~45 min.
 - [ ] **🟡 ~1–2 h** — **Table isn't responsive.** `table-fixed` with five columns and a `truncate` on filename — check on mobile first (~10 min); the fix is a card layout or fewer columns at narrow widths. Time is uncertain because I haven't verified it's actually broken.
 - [ ] **⚪ ~1 h** — **No chunk count.** Was deliberately not selected in the CRUD round. Reconsider: it's the one column that shows retrieval actually happened, and it makes a zero-chunk document self-evident. Needs a `COUNT` join in `documents.service.ts`.
 - [ ] **⚪ ~10 min** — **Cosmetic:** stray indentation at `DocumentsPage.tsx:52`; `Uploaded` shows date only, no time.
@@ -181,6 +185,6 @@ Expose `search` and `fetch` tools so Claude Desktop / Claude Code can query the 
 - [ ] **🟡 ~2–3 h** — Frontend review item 2, residual autoscroll yank. `StreamingMessage`'s sentinel `scrollIntoView`s every token, so scrolling up mid-stream yanks you back down. `BottomScrollButton` gives a way *down*, not a way to *stay up*. Coupling note: the button's `atBottom` stays fresh during streams only because the sentinel yanks fire scroll events — any near-bottom guard on the sentinel must add a `ResizeObserver` content-growth recheck to the button. Estimate is wide because a previous attempt at this was abandoned undiagnosed.
 - [ ] **⚪ ~10 min** — Frontend review item 4: `nav-main.tsx` is dead. (`nav-projects.tsx` is deliberately kept, see 3.1 — delete `nav-main` only.)
 - [ ] **⚪ ~15 min** — Frontend review item 10: `aria-expanded` on `SourceChips`.
-- [ ] **⚪ ~15 min** — DB cleanup: junk test conversations from earlier sessions. Blocked on 3.1 (no delete UI exists). Trivial once the UI ships.
+- [ ] **⚪ ~15 min** — DB cleanup: junk test conversations from earlier sessions. **Unblocked 2026-08-10** — 3.1 shipped, so this is now click-through work in the sidebar, no SQL needed.
 - [ ] **⚪ ~15 min** — Cosmetic, previously skipped: `new QueryClient` missing parens in `lib/queryClient.ts`; `apiFetch` param named `input` while typed `string`; repeated `fetch(input, init)` instead of a hoisted thunk.
 - [ ] **🟡 ~15 min** — Tag + GitHub Release for the auth deploy (`v0.2.0`) if not already done.
