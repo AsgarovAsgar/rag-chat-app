@@ -3,6 +3,7 @@ import { RotateCcw, Trash2 } from 'lucide-react'
 
 import { deleteDocument, fetchDocuments, retryDocument } from '@/api/documents'
 import { queryKeys } from '@/api/queryKeys'
+import { DocumentCard } from '@/components/DocumentCard'
 import { DocumentUpload } from '@/components/DocumentUpload'
 import { Loading } from '@/components/Loading'
 import { Badge } from '@/components/ui/badge'
@@ -66,6 +67,23 @@ export function DocumentsPage() {
           </p>
         </div>
       ): (
+        <>
+        <div className="flex flex-col gap-1.5 md:hidden">
+          {documents.map((doc) => (
+            <DocumentCard
+              key={doc.id}
+              document={doc}
+              isBusy={isRowBusy(doc.id)}
+              onRetry={() => retryMutation.mutate(doc.id)}
+              onDelete={() => {
+                if (window.confirm(`Delete "${doc.filename}"?`)) {
+                  deleteMutation.mutate(doc.id)
+                }
+              }}
+            />
+          ))}
+        </div>
+        <div className="hidden md:block">
         <Table className="table-fixed">
           <TableHeader>
             <TableRow>
@@ -119,6 +137,8 @@ export function DocumentsPage() {
             ))}
           </TableBody>
         </Table>
+        </div>
+        </>
       )}
     </div>
   )
