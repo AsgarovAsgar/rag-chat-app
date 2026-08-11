@@ -1,6 +1,8 @@
 import { RotateCcw, Trash2 } from 'lucide-react'
+import { useState } from 'react'
 
 import type { Document } from '@/api/documents'
+import { DeleteDocumentDialog } from '@/components/DeleteDocumentDialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 
@@ -28,6 +30,8 @@ export function DocumentCard({
   onRetry: () => void
   onDelete: () => void
 }) {
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
   return (
     <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
       <div className="min-w-0 flex-1">
@@ -70,11 +74,18 @@ export function DocumentCard({
           size="icon-sm"
           aria-label="Delete"
           disabled={isBusy}
-          onClick={onDelete}
+          onClick={() => setConfirmOpen(true)}
         >
           <Trash2 />
         </Button>
       </div>
+
+      <DeleteDocumentDialog
+        filename={document.filename}
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        onConfirm={onDelete}
+      />
     </div>
   )
 }
