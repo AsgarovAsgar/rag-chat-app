@@ -1,34 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { RotateCcw, Trash2 } from 'lucide-react'
 
 import { deleteDocument, fetchDocuments, retryDocument } from '@/api/documents'
 import { queryKeys } from '@/api/queryKeys'
+import { DocumentCard } from '@/components/DocumentCard'
+import { DocumentRow } from '@/components/DocumentRow'
 import { DocumentUpload } from '@/components/DocumentUpload'
 import { Loading } from '@/components/Loading'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import {
   Table,
   TableBody,
-  TableCell,
   TableHead,
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
 import { useDocumentStatusUpdates } from '@/hooks/useDocumentStatusUpdates'
-
-const statusVariant = {
-  pending: 'secondary',
-  processing: 'secondary',
-  ready: 'default',
-  failed: 'destructive',
-} as const
-
-function formatBytes(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-}
 
 export function DocumentsPage() {
   useDocumentStatusUpdates()
@@ -66,6 +51,19 @@ export function DocumentsPage() {
           </p>
         </div>
       ): (
+        <>
+        <div className="flex flex-col gap-1.5 md:hidden">
+          {documents.map((doc) => (
+            <DocumentCard
+              key={doc.id}
+              document={doc}
+              isBusy={isRowBusy(doc.id)}
+              onRetry={() => retryMutation.mutate(doc.id)}
+              onDelete={() => deleteMutation.mutate(doc.id)}
+            />
+          ))}
+        </div>
+        <div className="hidden md:block">
         <Table className="table-fixed">
           <TableHeader>
             <TableRow>
@@ -78,47 +76,18 @@ export function DocumentsPage() {
           </TableHeader>
           <TableBody>
             {documents.map((doc) => (
-              <TableRow key={doc.id}>
-                <TableCell className="truncate">{doc.filename}</TableCell>
-                <TableCell>
-                  <Badge variant={statusVariant[doc.status]} title={doc.error ?? undefined}>
-                    {doc.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>{formatBytes(doc.sizeBytes)}</TableCell>
-                <TableCell>{new Date(doc.createdAt).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  <div className="flex justify-end gap-1">
-                    {doc.status === 'failed' && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Retry"
-                        disabled={isRowBusy(doc.id)}
-                        onClick={() => retryMutation.mutate(doc.id)}
-                      >
-                        <RotateCcw />
-                      </Button>
-                    )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Delete"
-                      disabled={isRowBusy(doc.id)}
-                      onClick={() => {
-                        if (window.confirm(`Delete "${doc.filename}"?`)) {
-                          deleteMutation.mutate(doc.id)
-                        }
-                      }}
-                    >
-                      <Trash2 />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
+              <DocumentRow
+                key={doc.id}
+                document={doc}
+                isBusy={isRowBusy(doc.id)}
+                onRetry={() => retryMutation.mutate(doc.id)}
+                onDelete={() => deleteMutation.mutate(doc.id)}
+              />
             ))}
           </TableBody>
         </Table>
+        </div>
+        </>
       )}
     </div>
   )
