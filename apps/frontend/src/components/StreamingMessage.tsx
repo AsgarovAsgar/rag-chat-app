@@ -40,7 +40,7 @@ export function StreamingMessage() {
             <span className="text-muted-foreground animate-pulse">Thinking…</span>
           </MessageBubble>
         )}
-        {streamingText && <MessageBubble role="assistant"><CitedText text={streamingText} /></MessageBubble>}
+        {streamingText && <MessageBubble role="assistant"><CitedText text={streamingText} streaming /></MessageBubble>}
         {sources.length > 0 && <SourceChips sources={sources} cited={extractCitations(streamingText)} />}
       </div>
       {error && <p className="mt-2 text-destructive">{error}</p>}
