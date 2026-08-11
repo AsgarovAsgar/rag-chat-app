@@ -98,7 +98,7 @@ export function SourceChips({ sources, cited }: { sources: Source[], cited: Set<
                 {' · '}{(active.similarity * 100).toFixed(0)}% match
               </DialogTitle>
             </DialogHeader>
-            <div className="-mx-4 no-scrollbar max-h-[50vh] overflow-y-auto px-4 space-y-1">
+            <div className="-mx-4 no-scrollbar max-h-[75vh] overflow-y-auto px-4 space-y-1">
               {parseExcerpt(active.content).map((block, i) =>
                 block.kind === 'heading' ? (
                   <p key={i} className="text-sm font-semibold text-foreground">
