@@ -80,7 +80,7 @@ export function ConversationItem({
           defaultValue={conversation.title}
           autoFocus
           aria-label="Conversation title"
-          className="h-8 w-full bg-transparent px-2 text-sm outline-none"
+          className="h-8 ring-1 ring-ring/50 ring-inset w-full bg-transparent px-2 rounded-md text-sm outline-none"
           onFocus={e => e.currentTarget.select()}
           onKeyDown={e => {
             if (e.key === 'Enter') commit(e.currentTarget.value)
@@ -105,7 +105,7 @@ export function ConversationItem({
 
       <DropdownMenu >
         <DropdownMenuTrigger
-          render={<SidebarMenuAction showOnHover className="cursor-pointer aria-expanded:opacity-100 aria-expanded:text-sidebar-foreground group-focus-within/menu-item:opacity-0 group-hover/menu-item:opacity-100 text-muted-foreground peer-hover/menu-button:text-muted-foreground hover:bg-transparent hover:text-sidebar-foreground"/>}
+          render={<SidebarMenuAction showOnHover className="cursor-pointer aria-expanded:opacity-100 aria-expanded:text-sidebar-foreground group-hover/menu-item:opacity-100 text-muted-foreground peer-hover/menu-button:text-muted-foreground hover:bg-transparent hover:text-sidebar-foreground"/>}
         >
           <MoreHorizontalIcon />
           <span className="sr-only">More</span>
