@@ -1,23 +1,23 @@
-import { RotateCcw, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { RotateCcw, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
-import type { Document } from '@/api/documents'
-import { DeleteDocumentDialog } from '@/components/DeleteDocumentDialog'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { TableCell, TableRow } from '@/components/ui/table'
+import type { Document } from '@/api/documents';
+import { DeleteDocumentDialog } from '@/components/DeleteDocumentDialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { TableCell, TableRow } from '@/components/ui/table';
 
 const statusVariant = {
   pending: 'secondary',
   processing: 'secondary',
   ready: 'default',
   failed: 'destructive',
-} as const
+} as const;
 
 function formatBytes(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export function DocumentRow({
@@ -26,12 +26,12 @@ export function DocumentRow({
   onRetry,
   onDelete,
 }: {
-  document: Document
-  isBusy: boolean
-  onRetry: () => void
-  onDelete: () => void
+  document: Document;
+  isBusy: boolean;
+  onRetry: () => void;
+  onDelete: () => void;
 }) {
-  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
     <TableRow>
@@ -46,13 +46,7 @@ export function DocumentRow({
       <TableCell>
         <div className="flex justify-end gap-1">
           {document.status === 'failed' && (
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label="Retry"
-              disabled={isBusy}
-              onClick={onRetry}
-            >
+            <Button variant="ghost" size="icon" aria-label="Retry" disabled={isBusy} onClick={onRetry}>
               <RotateCcw />
             </Button>
           )}
@@ -75,5 +69,5 @@ export function DocumentRow({
         />
       </TableCell>
     </TableRow>
-  )
+  );
 }

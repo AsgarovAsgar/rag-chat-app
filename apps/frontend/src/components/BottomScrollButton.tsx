@@ -1,35 +1,34 @@
-import { ArrowDown } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowDown } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
-import { Button } from "@/components/ui/button";
+import { Button } from '@/components/ui/button';
 
 const SCROLL_BOTTOM_THRESHOLD = 500;
 
-export function BottomScrollButton({ containerRef }: {containerRef: React.RefObject<HTMLDivElement | null>}) {
-  const [atBottom, setAtBottom] = useState(true)
+export function BottomScrollButton({ containerRef }: { containerRef: React.RefObject<HTMLDivElement | null> }) {
+  const [atBottom, setAtBottom] = useState(true);
 
   function scrollToBottom() {
     containerRef.current?.scrollTo({
       top: containerRef.current.scrollHeight,
       behavior: 'smooth',
-    })
+    });
   }
 
   useEffect(() => {
-    const el = containerRef.current
-    if(!el) return
+    const el = containerRef.current;
+    if (!el) return;
 
     const onScroll = () => {
-      setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_BOTTOM_THRESHOLD)
-    }
-    
-    onScroll()
-    el.addEventListener('scroll', onScroll, { passive: true })
-    return () => el.removeEventListener('scroll', onScroll)
-  }, [containerRef])
+      setAtBottom(el.scrollHeight - el.scrollTop - el.clientHeight < SCROLL_BOTTOM_THRESHOLD);
+    };
 
+    onScroll();
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [containerRef]);
 
-  if(atBottom) return null
+  if (atBottom) return null;
 
   return (
     <Button
@@ -41,5 +40,5 @@ export function BottomScrollButton({ containerRef }: {containerRef: React.RefObj
     >
       <ArrowDown className="size-4" />
     </Button>
-  )
+  );
 }

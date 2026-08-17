@@ -1,25 +1,25 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Link, useLocation, useNavigate } from 'react-router'
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { Link, useLocation, useNavigate } from 'react-router';
 
-import { login } from '@/api/auth'
-import { queryKeys } from '@/api/queryKeys'
-import { AuthForm } from '@/components/AuthForm'
-import { DemoButton } from '@/components/DemoButton'
+import { login } from '@/api/auth';
+import { queryKeys } from '@/api/queryKeys';
+import { AuthForm } from '@/components/AuthForm';
+import { DemoButton } from '@/components/DemoButton';
 
 export function LoginPage() {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const queryClient = useQueryClient()
+  const navigate = useNavigate();
+  const location = useLocation();
+  const queryClient = useQueryClient();
 
-  const from = (location.state as { from?: string } | null)?.from ?? '/'
+  const from = (location.state as { from?: string } | null)?.from ?? '/';
 
   const mutation = useMutation({
     mutationFn: login,
-    onSuccess: user => {
-      queryClient.setQueryData(queryKeys.me, user)
-      navigate(from, { replace: true })
+    onSuccess: (user) => {
+      queryClient.setQueryData(queryKeys.me, user);
+      navigate(from, { replace: true });
     },
-  })
+  });
 
   return (
     <AuthForm
@@ -29,8 +29,15 @@ export function LoginPage() {
       isPending={mutation.isPending}
       error={mutation.error?.message ?? null}
       onSubmit={mutation.mutate}
-      footer={<>No account? <Link to="/register" className="underline">Create one</Link></>}
+      footer={
+        <>
+          No account?{' '}
+          <Link to="/register" className="underline">
+            Create one
+          </Link>
+        </>
+      }
       belowForm={<DemoButton />}
     />
-  )
+  );
 }

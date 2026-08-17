@@ -1,18 +1,18 @@
-import { Outlet,Route, Routes } from 'react-router'
+import { Outlet, Route, Routes } from 'react-router';
 
-import { AppSidebar } from '@/components/AppSidebar'
-import { Separator } from '@/components/ui/separator'
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import { ConversationPage } from '@/pages/ConversationPage'
-import { DocumentsPage } from '@/pages/DocumentsPage'
-import { HomePage } from '@/pages/HomePage'
+import { AppSidebar } from '@/components/AppSidebar';
+import { Separator } from '@/components/ui/separator';
+import { SidebarInset, SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import { ConversationPage } from '@/pages/ConversationPage';
+import { DocumentsPage } from '@/pages/DocumentsPage';
+import { HomePage } from '@/pages/HomePage';
 
-import { HeaderTitle } from './components/HeaderTitle'
-import { RequireAuth } from './components/RequireAuth'
-import { LoginPage } from './pages/LoginPage'
-import { NotFoundPage } from './pages/NotFoundPage'
-import { RegisterPage } from './pages/RegisterPage'
+import { HeaderTitle } from './components/HeaderTitle';
+import { RequireAuth } from './components/RequireAuth';
+import { LoginPage } from './pages/LoginPage';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { RegisterPage } from './pages/RegisterPage';
 
 function AppLayout() {
   return (
@@ -21,10 +21,7 @@ function AppLayout() {
         <AppSidebar />
         <SidebarInset className="h-svh">
           <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
-            <SidebarTrigger 
-              onClick={e => e.currentTarget.blur()}
-              className="-ml-1" 
-            />
+            <SidebarTrigger onClick={(e) => e.currentTarget.blur()} className="-ml-1" />
             <Separator orientation="vertical" className="mr-2 h-4 data-vertical:self-center" />
             <HeaderTitle />
           </header>
@@ -32,7 +29,7 @@ function AppLayout() {
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>
-  )
+  );
 }
 
 function App() {
@@ -44,12 +41,12 @@ function App() {
         <Route element={<AppLayout />}>
           <Route index element={<HomePage />} />
           <Route path="c/:conversationId" element={<ConversationPage />} />
-          <Route path='documents' element={<DocumentsPage />} />
+          <Route path="documents" element={<DocumentsPage />} />
         </Route>
       </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;

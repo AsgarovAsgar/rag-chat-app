@@ -1,22 +1,21 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router";
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
 
-import { startDemo } from "@/api/auth";
-import { queryKeys } from "@/api/queryKeys";
-import { Button } from '@/components/ui/button'
-
+import { startDemo } from '@/api/auth';
+import { queryKeys } from '@/api/queryKeys';
+import { Button } from '@/components/ui/button';
 
 export function DemoButton() {
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const mutation = useMutation({
     mutationFn: startDemo,
-    onSuccess: user => {
-      queryClient.setQueryData(queryKeys.me, user)
-      navigate('/', { replace: true })
-    }
-  })
+    onSuccess: (user) => {
+      queryClient.setQueryData(queryKeys.me, user);
+      navigate('/', { replace: true });
+    },
+  });
 
   return (
     <div className="mt-6">
@@ -25,9 +24,7 @@ export function DemoButton() {
           <span className="w-full border-t" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-card px-2 text-xs uppercase text-muted-foreground">
-            or
-          </span>
+          <span className="bg-card px-2 text-xs text-muted-foreground uppercase">or</span>
         </div>
       </div>
 
@@ -40,9 +37,7 @@ export function DemoButton() {
       >
         {mutation.isPending ? 'Setting up…' : 'Try the demo'}
       </Button>
-      {mutation.error && (
-        <p className="mt-2 text-sm text-destructive">{mutation.error.message}</p>
-      )}
+      {mutation.error && <p className="mt-2 text-sm text-destructive">{mutation.error.message}</p>}
     </div>
-  )
+  );
 }

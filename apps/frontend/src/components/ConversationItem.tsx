@@ -1,78 +1,89 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from 'lucide-react'
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { MoreHorizontalIcon, PencilIcon, Trash2Icon } from 'lucide-react';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router';
 
-import { type Conversation, deleteConversation, renameConversation } from '@/api/conversations'
-import { queryKeys } from '@/api/queryKeys'
+import { type Conversation, deleteConversation, renameConversation } from '@/api/conversations';
+import { queryKeys } from '@/api/queryKeys';
 import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar'
-import { useTypewriter } from '@/hooks/useTypewriter'
-import { useChatStore } from '@/store/chatStore'
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
+import { useTypewriter } from '@/hooks/useTypewriter';
+import { useChatStore } from '@/store/chatStore';
 
 export function ConversationItem({
   conversation,
   isActive,
   onNavigate,
 }: {
-  conversation: Conversation
-  isActive: boolean
-  onNavigate: () => void
+  conversation: Conversation;
+  isActive: boolean;
+  onNavigate: () => void;
 }) {
-  const { isMobile } = useSidebar()
-  const queryClient = useQueryClient()
-  const navigate = useNavigate()
-  const [isEditing, setIsEditing] = useState(false)
-  const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null)
-  const [confirmOpen, setConfirmOpen] = useState(false)
-  const isStreaming = useChatStore(s => s.status === 'streaming' && s.streamConversationId === conversation.id)
-  const animatingId = useChatStore(s => s.titleAnimatingId)
-  const displayTitle = useTypewriter(conversation.title, animatingId === conversation.id)
+  const { isMobile } = useSidebar();
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const [isEditing, setIsEditing] = useState(false);
+  const [optimisticTitle, setOptimisticTitle] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const isStreaming = useChatStore((s) => s.status === 'streaming' && s.streamConversationId === conversation.id);
+  const animatingId = useChatStore((s) => s.titleAnimatingId);
+  const displayTitle = useTypewriter(conversation.title, animatingId === conversation.id);
 
   const rename = useMutation({
     mutationFn: (title: string) => renameConversation(conversation.id, title),
     onError: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.conversations })
-      setOptimisticTitle(null)
+      queryClient.invalidateQueries({ queryKey: queryKeys.conversations });
+      setOptimisticTitle(null);
     },
-    onSuccess: updated => {
-      queryClient.setQueryData<Conversation[]>(queryKeys.conversations, old =>
-        old?.map(c => (c.id === updated.id ? updated : c))
-      )
-      setOptimisticTitle(null)
+    onSuccess: (updated) => {
+      queryClient.setQueryData<Conversation[]>(queryKeys.conversations, (old) =>
+        old?.map((c) => (c.id === updated.id ? updated : c)),
+      );
+      setOptimisticTitle(null);
     },
-  })
+  });
 
   const remove = useMutation({
     mutationFn: () => deleteConversation(conversation.id),
     onMutate: () => {
-      const previous = queryClient.getQueryData<Conversation[]>(queryKeys.conversations)
-      queryClient.setQueryData<Conversation[]>(queryKeys.conversations, old =>
-        old?.filter(c => c.id !== conversation.id)
-      )
-      if (isActive) navigate('/')
-      return { previous }
+      const previous = queryClient.getQueryData<Conversation[]>(queryKeys.conversations);
+      queryClient.setQueryData<Conversation[]>(queryKeys.conversations, (old) =>
+        old?.filter((c) => c.id !== conversation.id),
+      );
+      if (isActive) navigate('/');
+      return { previous };
     },
     onError: (_err, _vars, context) => {
       if (context?.previous) {
-        queryClient.setQueryData(queryKeys.conversations, context.previous)
+        queryClient.setQueryData(queryKeys.conversations, context.previous);
       }
     },
-  })
+  });
 
   if (isEditing) {
     const commit = (value: string) => {
-      const title = value.trim()
+      const title = value.trim();
       if (title && title !== conversation.title) {
-        setOptimisticTitle(title)
-        rename.mutate(title)
+        setOptimisticTitle(title);
+        rename.mutate(title);
       }
-      setIsEditing(false)
-    }
+      setIsEditing(false);
+    };
 
     return (
       <SidebarMenuItem>
@@ -80,16 +91,16 @@ export function ConversationItem({
           defaultValue={conversation.title}
           autoFocus
           aria-label="Conversation title"
-          className="h-8 ring-1 ring-ring/50 ring-inset w-full bg-transparent px-2 rounded-md text-sm outline-none"
-          onFocus={e => e.currentTarget.select()}
-          onKeyDown={e => {
-            if (e.key === 'Enter') commit(e.currentTarget.value)
-            if (e.key === 'Escape') setIsEditing(false)
+          className="h-8 w-full rounded-md bg-transparent px-2 text-sm ring-1 ring-ring/50 outline-none ring-inset"
+          onFocus={(e) => e.currentTarget.select()}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') commit(e.currentTarget.value);
+            if (e.key === 'Escape') setIsEditing(false);
           }}
-          onBlur={e => commit(e.currentTarget.value)}
+          onBlur={(e) => commit(e.currentTarget.value)}
         />
       </SidebarMenuItem>
-    )
+    );
   }
 
   return (
@@ -103,27 +114,24 @@ export function ConversationItem({
         <span>{optimisticTitle ?? displayTitle}</span>
       </SidebarMenuButton>
 
-      <DropdownMenu >
+      <DropdownMenu>
         <DropdownMenuTrigger
-          render={<SidebarMenuAction showOnHover className="cursor-pointer aria-expanded:opacity-100 aria-expanded:text-sidebar-foreground group-hover/menu-item:opacity-100 text-muted-foreground peer-hover/menu-button:text-muted-foreground hover:bg-transparent hover:text-sidebar-foreground"/>}
+          render={
+            <SidebarMenuAction
+              showOnHover
+              className="cursor-pointer text-muted-foreground group-hover/menu-item:opacity-100 peer-hover/menu-button:text-muted-foreground hover:bg-transparent hover:text-sidebar-foreground aria-expanded:text-sidebar-foreground aria-expanded:opacity-100"
+            />
+          }
         >
           <MoreHorizontalIcon />
           <span className="sr-only">More</span>
         </DropdownMenuTrigger>
-        <DropdownMenuContent
-          className="w-fit"
-          side={isMobile ? 'bottom' : 'right'}
-          align={isMobile ? 'end' : 'start'}
-        >
+        <DropdownMenuContent className="w-fit" side={isMobile ? 'bottom' : 'right'} align={isMobile ? 'end' : 'start'}>
           <DropdownMenuItem onClick={() => setIsEditing(true)}>
             <PencilIcon />
             <span>Rename</span>
           </DropdownMenuItem>
-          <DropdownMenuItem 
-            variant="destructive" 
-            disabled={isStreaming}
-            onClick={() => setConfirmOpen(true)}
-          >
+          <DropdownMenuItem variant="destructive" disabled={isStreaming} onClick={() => setConfirmOpen(true)}>
             <Trash2Icon />
             <span>Delete</span>
           </DropdownMenuItem>
@@ -135,18 +143,17 @@ export function ConversationItem({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete conversation?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete “{conversation.title}” and all of its
-              messages. This can’t be undone.
+              This will permanently delete “{conversation.title}” and all of its messages. This can’t be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction 
+            <AlertDialogAction
               variant="destructive"
               onClick={() => {
-                setConfirmOpen(false)
-                remove.mutate()
-              }} 
+                setConfirmOpen(false);
+                remove.mutate();
+              }}
             >
               Delete
             </AlertDialogAction>
@@ -154,5 +161,5 @@ export function ConversationItem({
         </AlertDialogContent>
       </AlertDialog>
     </SidebarMenuItem>
-  )
+  );
 }

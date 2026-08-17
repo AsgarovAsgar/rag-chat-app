@@ -1,6 +1,6 @@
-import { Link } from 'react-router'
+import { Link } from 'react-router';
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui/button';
 
 export function NotFoundPage() {
   return (
@@ -9,13 +9,11 @@ export function NotFoundPage() {
         <h1 className="text-7xl font-semibold tracking-tight">
           404<span className="sr-only"> — page not found</span>
         </h1>
-        <p className="mt-4 text-muted-foreground">
-          All routes lead to Rome. This one doesn't.
-        </p>
+        <p className="mt-4 text-muted-foreground">All routes lead to Rome. This one doesn't.</p>
         <Button render={<Link to="/" />} className="mt-6">
           Back to chat
         </Button>
       </div>
     </div>
-  )
+  );
 }
