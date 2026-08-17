@@ -1,9 +1,9 @@
-import { ChatInput } from "@/components/ChatInput";
-import { useChatStore } from "@/store/chatStore";
+import { ChatInput } from '@/components/ChatInput';
+import { useChatStore } from '@/store/chatStore';
 
 export function HomePage() {
-  const streamConversationId = useChatStore(s => s.streamConversationId)
-  const error = useChatStore(s => s.error)
+  const streamConversationId = useChatStore((s) => s.streamConversationId);
+  const error = useChatStore((s) => s.error);
 
   return (
     <section className="flex min-h-0 flex-1 flex-col items-center justify-center p-4">
@@ -13,5 +13,5 @@ export function HomePage() {
         {streamConversationId === null && error && <p className="text-center text-destructive">{error}</p>}
       </div>
     </section>
-  )
+  );
 }

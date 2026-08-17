@@ -1,6 +1,6 @@
-import { BotIcon } from 'lucide-react'
+import { BotIcon } from 'lucide-react';
 
-import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 
 export function AppBrand() {
   return (
@@ -17,5 +17,5 @@ export function AppBrand() {
         </SidebarMenuButton>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }

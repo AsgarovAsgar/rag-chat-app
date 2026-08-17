@@ -1,22 +1,22 @@
-import { RotateCcw, Trash2 } from 'lucide-react'
-import { useState } from 'react'
+import { RotateCcw, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 
-import type { Document } from '@/api/documents'
-import { DeleteDocumentDialog } from '@/components/DeleteDocumentDialog'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
+import type { Document } from '@/api/documents';
+import { DeleteDocumentDialog } from '@/components/DeleteDocumentDialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 const statusVariant = {
   pending: 'secondary',
   processing: 'secondary',
   ready: 'default',
   failed: 'destructive',
-} as const
+} as const;
 
 function formatBytes(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 export function DocumentCard({
@@ -25,12 +25,12 @@ export function DocumentCard({
   onRetry,
   onDelete,
 }: {
-  document: Document
-  isBusy: boolean
-  onRetry: () => void
-  onDelete: () => void
+  document: Document;
+  isBusy: boolean;
+  onRetry: () => void;
+  onDelete: () => void;
 }) {
-  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   return (
     <div className="flex items-center gap-2 rounded-lg border px-3 py-2">
@@ -40,15 +40,11 @@ export function DocumentCard({
         </p>
 
         <div className="mt-1 flex min-w-0 items-center gap-2">
-          <Badge
-            variant={statusVariant[document.status]}
-            title={document.error ?? undefined}
-          >
+          <Badge variant={statusVariant[document.status]} title={document.error ?? undefined}>
             {document.status}
           </Badge>
           <p className="truncate text-xs text-muted-foreground">
-            {formatBytes(document.sizeBytes)} ·{' '}
-            {new Date(document.createdAt).toLocaleDateString()}
+            {formatBytes(document.sizeBytes)} · {new Date(document.createdAt).toLocaleDateString()}
           </p>
         </div>
 
@@ -59,16 +55,10 @@ export function DocumentCard({
 
       <div className="flex shrink-0 gap-1">
         {document.status === 'failed' && (
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Retry"
-            disabled={isBusy}
-            onClick={onRetry}
-          >
+          <Button variant="ghost" size="icon-sm" aria-label="Retry" disabled={isBusy} onClick={onRetry}>
             <RotateCcw />
           </Button>
-        )}  
+        )}
         <Button
           variant="ghost"
           size="icon-sm"
@@ -87,5 +77,5 @@ export function DocumentCard({
         onConfirm={onDelete}
       />
     </div>
-  )
+  );
 }

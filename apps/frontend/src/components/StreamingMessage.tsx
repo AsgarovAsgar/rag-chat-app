@@ -1,30 +1,29 @@
-import { useLayoutEffect, useRef } from "react";
-import { useParams } from "react-router";
+import { useLayoutEffect, useRef } from 'react';
+import { useParams } from 'react-router';
 
-import { extractCitations } from "@/lib/citations"
-import { useChatStore } from "@/store/chatStore";
+import { extractCitations } from '@/lib/citations';
+import { useChatStore } from '@/store/chatStore';
 
-import { CitedText } from "./CitedText";
-import { MessageBubble } from "./MessageBubble";
-import { SourceChips } from "./SourceChips";
-
+import { CitedText } from './CitedText';
+import { MessageBubble } from './MessageBubble';
+import { SourceChips } from './SourceChips';
 
 export function StreamingMessage() {
-  const {conversationId} = useParams()
+  const { conversationId } = useParams();
 
-  const pendingUserMessage = useChatStore(s => s.pendingUserMessage)
-  const streamConversationId = useChatStore(s => s.streamConversationId)
-  const streamingText = useChatStore(s => s.streamingText)
-  const sources = useChatStore(s => s.sources)
-  const status = useChatStore(s => s.status)
-  const error = useChatStore(s => s.error)
+  const pendingUserMessage = useChatStore((s) => s.pendingUserMessage);
+  const streamConversationId = useChatStore((s) => s.streamConversationId);
+  const streamingText = useChatStore((s) => s.streamingText);
+  const sources = useChatStore((s) => s.sources);
+  const status = useChatStore((s) => s.status);
+  const error = useChatStore((s) => s.error);
 
-  const bottomRef = useRef<HTMLDivElement>(null)
+  const bottomRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
-    bottomRef.current?.scrollIntoView({block: 'end'})
-  }, [pendingUserMessage, streamingText])
+    bottomRef.current?.scrollIntoView({ block: 'end' });
+  }, [pendingUserMessage, streamingText]);
 
-  if(streamConversationId !== conversationId) return null
+  if (streamConversationId !== conversationId) return null;
 
   return (
     <>
@@ -37,14 +36,18 @@ export function StreamingMessage() {
       <div className="mt-2">
         {status === 'streaming' && !streamingText && (
           <MessageBubble role="assistant">
-            <span className="text-muted-foreground animate-pulse">Thinking…</span>
+            <span className="animate-pulse text-muted-foreground">Thinking…</span>
           </MessageBubble>
         )}
-        {streamingText && <MessageBubble role="assistant"><CitedText text={streamingText} streaming /></MessageBubble>}
+        {streamingText && (
+          <MessageBubble role="assistant">
+            <CitedText text={streamingText} streaming />
+          </MessageBubble>
+        )}
         {sources.length > 0 && <SourceChips sources={sources} cited={extractCitations(streamingText)} />}
       </div>
       {error && <p className="mt-2 text-destructive">{error}</p>}
       <div ref={bottomRef} />
     </>
-  )
+  );
 }

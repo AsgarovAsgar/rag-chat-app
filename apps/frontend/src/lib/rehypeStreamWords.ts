@@ -1,5 +1,5 @@
-import type { ElementContent, Root } from 'hast'
-import { visit } from 'unist-util-visit'
+import type { ElementContent, Root } from 'hast';
+import { visit } from 'unist-util-visit';
 
 /**
  * Wraps each word in a <span> so it can fade in as it streams.
@@ -12,15 +12,15 @@ import { visit } from 'unist-util-visit'
 export function rehypeStreamWords() {
   return (tree: Root) => {
     visit(tree, 'text', (node, index, parent) => {
-      if (!parent || index === undefined) return
-      if (parent.type === 'element' && (parent.tagName === 'code' || parent.tagName === 'pre')) return
+      if (!parent || index === undefined) return;
+      if (parent.type === 'element' && (parent.tagName === 'code' || parent.tagName === 'pre')) return;
 
       // Keep the whitespace in the output: splitting on a captured group means
       // the separators survive, so `white-space` and inline layout are unchanged.
-      const parts = node.value.split(/(\s+)/g).filter(part => part !== '')
-      if (parts.length === 0) return
+      const parts = node.value.split(/(\s+)/g).filter((part) => part !== '');
+      if (parts.length === 0) return;
 
-      const nodes: ElementContent[] = parts.map(part =>
+      const nodes: ElementContent[] = parts.map((part) =>
         /^\s+$/.test(part)
           ? { type: 'text', value: part }
           : {
@@ -28,11 +28,11 @@ export function rehypeStreamWords() {
               tagName: 'span',
               properties: { className: ['stream-word'] },
               children: [{ type: 'text', value: part }],
-            }
-      )
+            },
+      );
 
-      parent.children.splice(index, 1, ...nodes)
-      return index + nodes.length
-    })
-  }
+      parent.children.splice(index, 1, ...nodes);
+      return index + nodes.length;
+    });
+  };
 }

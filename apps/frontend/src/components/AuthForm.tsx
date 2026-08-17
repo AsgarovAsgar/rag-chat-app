@@ -1,29 +1,36 @@
-import { useState } from "react";
+import { useState } from 'react';
 
-import type { Credentials } from "@/api/auth";
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import type { Credentials } from '@/api/auth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 interface AuthFormProps {
-  title: string
-  submitLabel: string
-  passwordAutoComplete: 'current-password' | 'new-password'
-  isPending: boolean
-  error: string | null
-  onSubmit: (credentials: Credentials) => void
-  footer: React.ReactNode
-  belowForm: React.ReactNode
+  title: string;
+  submitLabel: string;
+  passwordAutoComplete: 'current-password' | 'new-password';
+  isPending: boolean;
+  error: string | null;
+  onSubmit: (credentials: Credentials) => void;
+  footer: React.ReactNode;
+  belowForm: React.ReactNode;
 }
 
 export function AuthForm({
-  title, submitLabel, passwordAutoComplete, isPending, error, onSubmit, footer, belowForm
+  title,
+  submitLabel,
+  passwordAutoComplete,
+  isPending,
+  error,
+  onSubmit,
+  footer,
+  belowForm,
 }: AuthFormProps) {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   function handleSubmit(e: React.SubmitEvent) {
-    e.preventDefault()
-    onSubmit({email, password})
+    e.preventDefault();
+    onSubmit({ email, password });
   }
 
   return (
@@ -33,19 +40,23 @@ export function AuthForm({
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <label htmlFor="email" className="text-sm font-medium">Email</label>
+            <label htmlFor="email" className="text-sm font-medium">
+              Email
+            </label>
             <Input
               id="email"
               type="email"
               autoComplete="email"
               required
               value={email}
-              onChange={e => setEmail(e.target.value)}
+              onChange={(e) => setEmail(e.target.value)}
             />
           </div>
 
           <div className="flex flex-col gap-2">
-            <label htmlFor="password" className="text-sm font-medium">Password</label>
+            <label htmlFor="password" className="text-sm font-medium">
+              Password
+            </label>
             <Input
               id="password"
               type="password"
@@ -53,7 +64,7 @@ export function AuthForm({
               required
               minLength={8}
               value={password}
-              onChange={e => setPassword(e.target.value)}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
@@ -69,5 +80,5 @@ export function AuthForm({
         {belowForm}
       </div>
     </div>
-  )
+  );
 }

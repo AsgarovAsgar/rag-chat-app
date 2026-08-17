@@ -1,9 +1,9 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { ChevronsUpDownIcon, LogOutIcon } from 'lucide-react'
-import { useNavigate } from 'react-router'
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { ChevronsUpDownIcon, LogOutIcon } from 'lucide-react';
+import { useNavigate } from 'react-router';
 
-import { logout } from '@/api/auth'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { logout } from '@/api/auth';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,43 +11,37 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuTrigger} from '@/components/ui/dropdown-menu'
-import {
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  useSidebar,
-} from '@/components/ui/sidebar'
-import { useMe } from '@/hooks/useMe'
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from '@/components/ui/sidebar';
+import { useMe } from '@/hooks/useMe';
 
-import { ThemeToggle } from './ThemeToggle'
+import { ThemeToggle } from './ThemeToggle';
 
 export function NavUser() {
-  const { isMobile } = useSidebar()
-  const { data: user } = useMe()
-  const navigate = useNavigate()
-  const queryClient = useQueryClient()
+  const { isMobile } = useSidebar();
+  const { data: user } = useMe();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const logoutMutation = useMutation({
     mutationFn: logout,
     onSettled: () => {
-      navigate('/login', { replace: true })
-      queryClient.clear()
+      navigate('/login', { replace: true });
+      queryClient.clear();
     },
-  })
+  });
 
-  if (!user) return null
+  if (!user) return null;
 
-  const displayName = user.email.endsWith('@demo.invalid') ? 'Demo user' : user.email
-  const initial = user.email.charAt(0).toUpperCase()
+  const displayName = user.email.endsWith('@demo.invalid') ? 'Demo user' : user.email;
+  const initial = user.email.charAt(0).toUpperCase();
 
   return (
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
-          <DropdownMenuTrigger
-            render={<SidebarMenuButton size="lg" className="aria-expanded:bg-muted" />}
-          >
+          <DropdownMenuTrigger render={<SidebarMenuButton size="lg" className="aria-expanded:bg-muted" />}>
             <Avatar>
               <AvatarFallback>{initial}</AvatarFallback>
             </Avatar>
@@ -57,24 +51,14 @@ export function NavUser() {
             </div>
             <ChevronsUpDownIcon className="ml-auto size-4" />
           </DropdownMenuTrigger>
-          <DropdownMenuContent
-            className="w-fit"
-            side={isMobile ? 'bottom' : 'right'}
-            align="end"
-            sideOffset={4}
-          >
+          <DropdownMenuContent className="w-fit" side={isMobile ? 'bottom' : 'right'} align="end" sideOffset={4}>
             <DropdownMenuGroup>
-              <DropdownMenuLabel className="truncate font-normal">
-                {user.email}
-              </DropdownMenuLabel>
+              <DropdownMenuLabel className="truncate font-normal">{user.email}</DropdownMenuLabel>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <ThemeToggle />
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => logoutMutation.mutate()}
-              disabled={logoutMutation.isPending}
-            >
+            <DropdownMenuItem onClick={() => logoutMutation.mutate()} disabled={logoutMutation.isPending}>
               <LogOutIcon />
               Log out
             </DropdownMenuItem>
@@ -82,5 +66,5 @@ export function NavUser() {
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
-  )
+  );
 }
